@@ -24,6 +24,32 @@ paths:
   # -----------------------------
   # AUTH
   # -----------------------------
+  /auth/signup:
+    post:
+      tags: [auth]
+      summary: Sign up a new user
+      operationId: authSignup
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthSignupRequest"
+      responses:
+        "200":
+          description: Signup successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSignupResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequest"
+
   /auth/nonce:
     post:
       tags: [auth]
@@ -1087,6 +1113,35 @@ components:
     # -----------------------------
     # AUTH SCHEMAS
     # -----------------------------
+    AuthSignupRequest:
+      type: object
+      required: [full_name, email, display_name]
+      properties:
+        full_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 255
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          nullable: true
+      additionalProperties: false
+
+    AuthSignupResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+      additionalProperties: false
+
     AuthNonceRequest:
       type: object
       required: [address]

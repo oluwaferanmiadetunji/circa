@@ -25,6 +25,9 @@ stop:
 lint:
 	golangci-lint fmt
 
+test:
+	go test -mod=mod ./... -v
+
 # OpenAPI code generation
 openapi-generate:
 	@echo "Generating API code from OpenAPI spec..."
@@ -45,4 +48,4 @@ openapi-validate:
 # Generate and validate OpenAPI
 openapi: openapi-validate openapi-generate
 
-.PHONY: install start new_migration stop sqlc run lint openapi openapi-generate openapi-validate
+.PHONY: install start new_migration stop sqlc run lint test openapi openapi-generate openapi-validate

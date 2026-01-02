@@ -22,12 +22,14 @@ type Redis struct {
 }
 
 type Config struct {
-	Port         string
-	DatabaseURL  string
-	Redis        Redis
-	SecretKey    string
-	FrontendURL  string
-	ResendAPIKey string
+	Port          string
+	DatabaseURL   string
+	Redis         Redis
+	SecretKey     string
+	FrontendURL   string
+	ResendAPIKey  string
+	EmailFrom     string
+	EmailFromName string
 }
 
 func LoadConfig() (Config, error) {
@@ -51,6 +53,8 @@ func LoadConfig() (Config, error) {
 
 	config.FrontendURL = mustGetEnv("FRONTEND_URL")
 	config.ResendAPIKey = mustGetEnv("RESEND_API_KEY")
+	config.EmailFrom = mustGetEnv("EMAIL_FROM")
+	config.EmailFromName = mustGetEnv("EMAIL_FROM_NAME")
 
 	if _, err := strconv.Atoi(config.Port); err != nil {
 		return config, fmt.Errorf("invalid port number: %w", err)

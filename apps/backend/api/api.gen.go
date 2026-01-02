@@ -157,6 +157,18 @@ type AuthNonceResponse struct {
 	Nonce string `json:"nonce"`
 }
 
+// AuthSignupRequest defines model for AuthSignupRequest.
+type AuthSignupRequest struct {
+	DisplayName *string             `json:"display_name"`
+	Email       openapi_types.Email `json:"email"`
+	FullName    string              `json:"full_name"`
+}
+
+// AuthSignupResponse defines model for AuthSignupResponse.
+type AuthSignupResponse struct {
+	Message string `json:"message"`
+}
+
 // AuthVerifyRequest defines model for AuthVerifyRequest.
 type AuthVerifyRequest struct {
 	// Address EVM address (0x-prefixed, 40 hex chars)
@@ -505,6 +517,9 @@ type GetRoundActivityParamsType string
 // AuthNonceJSONRequestBody defines body for AuthNonce for application/json ContentType.
 type AuthNonceJSONRequestBody = AuthNonceRequest
 
+// AuthSignupJSONRequestBody defines body for AuthSignup for application/json ContentType.
+type AuthSignupJSONRequestBody = AuthSignupRequest
+
 // AuthVerifyJSONRequestBody defines body for AuthVerify for application/json ContentType.
 type AuthVerifyJSONRequestBody = AuthVerifyRequest
 
@@ -537,6 +552,9 @@ type ServerInterface interface {
 	// Request a nonce for wallet sign-in
 	// (POST /auth/nonce)
 	AuthNonce(ctx echo.Context) error
+	// Sign up a new user
+	// (POST /auth/signup)
+	AuthSignup(ctx echo.Context) error
 	// Verify wallet signature and create a session (sets HttpOnly cookie)
 	// (POST /auth/verify)
 	AuthVerify(ctx echo.Context) error
@@ -624,6 +642,15 @@ func (w *ServerInterfaceWrapper) AuthNonce(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.AuthNonce(ctx)
+	return err
+}
+
+// AuthSignup converts echo context to params.
+func (w *ServerInterfaceWrapper) AuthSignup(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.AuthSignup(ctx)
 	return err
 }
 
@@ -1092,6 +1119,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 	router.POST(baseURL+"/auth/logout", wrapper.AuthLogout)
 	router.POST(baseURL+"/auth/nonce", wrapper.AuthNonce)
+	router.POST(baseURL+"/auth/signup", wrapper.AuthSignup)
 	router.POST(baseURL+"/auth/verify", wrapper.AuthVerify)
 	router.GET(baseURL+"/groups", wrapper.ListGroups)
 	router.POST(baseURL+"/groups", wrapper.CreateGroup)
@@ -1169,6 +1197,32 @@ func (response AuthNonce200JSONResponse) VisitAuthNonceResponse(w http.ResponseW
 type AuthNonce400JSONResponse ErrorBadRequest
 
 func (response AuthNonce400JSONResponse) VisitAuthNonceResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AuthSignupRequestObject struct {
+	Body *AuthSignupJSONRequestBody
+}
+
+type AuthSignupResponseObject interface {
+	VisitAuthSignupResponse(w http.ResponseWriter) error
+}
+
+type AuthSignup200JSONResponse AuthSignupResponse
+
+func (response AuthSignup200JSONResponse) VisitAuthSignupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AuthSignup400JSONResponse ErrorBadRequest
+
+func (response AuthSignup400JSONResponse) VisitAuthSignupResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
 
@@ -2217,6 +2271,9 @@ type StrictServerInterface interface {
 	// Request a nonce for wallet sign-in
 	// (POST /auth/nonce)
 	AuthNonce(ctx context.Context, request AuthNonceRequestObject) (AuthNonceResponseObject, error)
+	// Sign up a new user
+	// (POST /auth/signup)
+	AuthSignup(ctx context.Context, request AuthSignupRequestObject) (AuthSignupResponseObject, error)
 	// Verify wallet signature and create a session (sets HttpOnly cookie)
 	// (POST /auth/verify)
 	AuthVerify(ctx context.Context, request AuthVerifyRequestObject) (AuthVerifyResponseObject, error)
@@ -2340,6 +2397,35 @@ func (sh *strictHandler) AuthNonce(ctx echo.Context) error {
 		return err
 	} else if validResponse, ok := response.(AuthNonceResponseObject); ok {
 		return validResponse.VisitAuthNonceResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// AuthSignup operation middleware
+func (sh *strictHandler) AuthSignup(ctx echo.Context) error {
+	var request AuthSignupRequestObject
+
+	var body AuthSignupJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.AuthSignup(ctx.Request().Context(), request.(AuthSignupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AuthSignup")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(AuthSignupResponseObject); ok {
+		return validResponse.VisitAuthSignupResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}

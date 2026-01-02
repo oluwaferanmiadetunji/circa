@@ -6,6 +6,8 @@ import (
 	"circa/internal/db"
 	"circa/internal/handler"
 	"circa/internal/service/auth"
+	"circa/internal/email"
+	"circa/internal/queue"
 	"context"
 	"net/http"
 	"os"
@@ -31,18 +33,16 @@ func main() {
 	}
 
 	// Initialize database
-	_, err = db.InitPostgres(cfg.DatabaseURL)
+	store, err := db.InitPostgres(cfg.DatabaseURL)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error initializing database")
 	}
 
-	// TODO: Initialize Redis when needed
-	// redis.InitRedis(redis.RedisConfig{
-	// 	Address: cfg.Redis.Address,
-	// })
-
-	// Initialize services
-	authService := auth.NewService(15 * time.Minute) // Nonce expires in 15 minutes
+	queueService := queue.NewService(store)
+	emailService := email.NewService(cfg.ResendAPIKey, cfg.EmailFrom, cfg.EmailFromName)
+	queueWorker := queue.NewWorker(queueService, emailService)
+	
+	authService := auth.NewService(store, queueService, cfg.FrontendURL, 15*time.Minute)
 
 	// Initialize handlers
 	h := handler.NewHandler(authService)
@@ -69,6 +69,11 @@ func main() {
 	defer cancel()
 
 	var g errgroup.Group
+
+	g.Go(func() error {
+		queueWorker.Start(ctx)
+		return nil
+	})
 
 	// Start HTTP server
 	g.Go(func() error {

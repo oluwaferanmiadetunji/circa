@@ -1,0 +1,19 @@
+with-expecter: true
+mockname: "Mock{{.InterfaceName}}"
+packages:
+  circa/internal/db:
+    interfaces:
+      Store:
+        config:
+          dir: "internal/db/mocks"
+  github.com/jackc/pgx/v5:
+    interfaces:
+      Tx:
+        config:
+          dir: "internal/service/auth/mocks"
+  circa/internal/email:
+    interfaces:
+      EmailService:
+        config:
+          dir: "internal/queue/mocks"
+
