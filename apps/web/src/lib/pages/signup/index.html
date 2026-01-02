@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased text-zinc-900 bg-zinc-50">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circa | Rotating Savings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #e4e4e7;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d4d4d8;
+        }
+
+        /* Custom Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #18181b;
+        }
+
+        .toggle-checkbox:checked+.toggle-label {
+            background-color: #18181b;
+        }
+
+        /* Loaders */
+        .loader {
+            border-top-color: transparent;
+            -webkit-animation: spinner 0.8s linear infinite;
+            animation: spinner 0.8s linear infinite;
+        }
+
+        @keyframes spinner {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-out {
+            animation: fadeOut 0.3s ease-in forwards;
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
+        }
+
+        /* Landing Page Specifics */
+        .perspective-container {
+            perspective: 2000px;
+        }
+
+        .hero-card {
+            transform: rotateX(5deg) rotateY(-5deg) rotateZ(2deg);
+            transition: transform 0.5s ease;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        .hero-card:hover {
+            transform: rotateX(0) rotateY(0) rotateZ(0);
+        }
+
+        .mesh-bg {
+            background-image: radial-gradient(at 40% 20%, hsla(28, 100%, 74%, 0.1) 0px, transparent 50%),
+                radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 0.1) 0px, transparent 50%),
+                radial-gradient(at 0% 50%, hsla(340, 100%, 76%, 0.05) 0px, transparent 50%);
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zinc: {
+                            850: '#202023',
+                            950: '#0c0c0e',
+                        }
+                    },
+                    fontSize: {
+                        xxs: '0.65rem',
+                    },
+                    letterSpacing: {
+                        tighter: '-0.04em',
+                        tight: '-0.02em',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="selection:bg-zinc-200 selection:text-zinc-900 h-screen flex flex-col bg-zinc-50 overflow-hidden">
+
+    <!-- LANDING PAGE VIEW -->
+    <div id="landing-view" class="h-full overflow-y-auto w-full relative z-20 bg-zinc-50 mesh-bg fade-in flex flex-col">
+
+        <!-- Navbar -->
+        <nav class="sticky top-0 z-50 w-full backdrop-blur-md bg-zinc-50/80 border-b border-zinc-200/50">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-white shadow-sm">
+                        <iconify-icon icon="lucide:circle-dashed" width="18"></iconify-icon>
+                    </div>
+                    <span class="font-semibold text-lg tracking-tight text-zinc-900">Circa</span>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="hidden md:flex items-center gap-6 text-sm font-medium text-zinc-500">
+                        <a href="#" class="hover:text-zinc-900 transition-colors">Features</a>
+                        <a href="#" class="hover:text-zinc-900 transition-colors">Security</a>
+                        <a href="#" class="hover:text-zinc-900 transition-colors">Manifesto</a>
+                    </div>
+                    <button onclick="transitionToApp()"
+                        class="bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium px-4 py-2 rounded-full transition-all shadow-sm flex items-center gap-2 group">
+                        Sign Up
+                        <iconify-icon icon="lucide:arrow-right" width="14"
+                            class="group-hover:translate-x-0.5 transition-transform"></iconify-icon>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <main class="flex-1 flex flex-col items-center pt-20 pb-20 px-4 sm:px-6">
+            <div class="max-w-3xl text-center mb-16 space-y-6">
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-200 bg-white shadow-sm mb-4">
+                    <span class="flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                    <span class="text-xs font-medium text-zinc-600">v2.0 is now live on mainnet</span>
+                </div>
+
+                <h1 class="text-5xl md:text-7xl font-semibold tracking-tighter text-zinc-900 leading-[1.1]">
+                    Rotating savings,<br>
+                    <span class="text-zinc-400">reinvented on-chain.</span>
+                </h1>
+
+                <p class="text-lg text-zinc-500 max-w-xl mx-auto font-light leading-relaxed">
+                    Circa creates trustless credit circles for you and your friends. Pool funds, automate payouts, and
+                    save towards your goals without the headache.
+                </p>
+
+                <div class="flex items-center justify-center gap-4 pt-4">
+                    <button onclick="transitionToApp()"
+                        class="bg-zinc-900 text-white px-8 py-3.5 rounded-full font-medium text-sm hover:scale-105 transition-transform duration-200 shadow-xl shadow-zinc-900/10">
+                        Start a Circle
+                    </button>
+                    <button
+                        class="bg-white text-zinc-900 border border-zinc-200 px-8 py-3.5 rounded-full font-medium text-sm hover:bg-zinc-50 transition-colors">
+                        Read the Docs
+                    </button>
+                </div>
+            </div>
+
+            <!-- UI Visualization -->
+            <div class="perspective-container w-full max-w-5xl px-4 mb-24">
+                <div
+                    class="hero-card bg-white rounded-2xl border border-zinc-200 p-2 md:p-4 mx-auto max-w-4xl relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-tr from-zinc-100/50 to-transparent pointer-events-none">
+                    </div>
+                    <!-- Mock App Header -->
+                    <div class="flex items-center justify-between border-b border-zinc-100 pb-4 mb-6 px-4 pt-2">
+                        <div class="flex gap-2">
+                            <div class="w-3 h-3 rounded-full bg-zinc-200"></div>
+                            <div class="w-3 h-3 rounded-full bg-zinc-200"></div>
+                        </div>
+                        <div class="h-2 w-20 bg-zinc-100 rounded-full"></div>
+                    </div>
+                    <!-- Mock Content Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 px-4 pb-4">
+                        <div class="col-span-2 space-y-4">
+                            <div
+                                class="h-32 bg-zinc-50 border border-zinc-100 rounded-xl w-full flex flex-col justify-center p-6 space-y-3">
+                                <div class="h-2 w-24 bg-zinc-200 rounded"></div>
+                                <div class="h-8 w-48 bg-zinc-900 rounded-md opacity-90"></div>
+                            </div>
+                            <div class="space-y-2">
+                                <div
+                                    class="h-14 w-full border border-zinc-100 rounded-lg flex items-center px-4 justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-zinc-100"></div>
+                                        <div class="h-2 w-24 bg-zinc-100 rounded"></div>
+                                    </div>
+                                    <div class="h-2 w-12 bg-emerald-100 rounded"></div>
+                                </div>
+                                <div
+                                    class="h-14 w-full border border-zinc-100 rounded-lg flex items-center px-4 justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-zinc-100"></div>
+                                        <div class="h-2 w-24 bg-zinc-100 rounded"></div>
+                                    </div>
+                                    <div class="h-2 w-12 bg-zinc-100 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="h-full bg-zinc-900 rounded-xl p-6 text-white/20 flex flex-col justify-between">
+                                <div class="space-y-2">
+                                    <div class="h-2 w-full bg-white/10 rounded"></div>
+                                    <div class="h-2 w-2/3 bg-white/10 rounded"></div>
+                                </div>
+                                <div class="h-8 w-full bg-white/10 rounded mt-8"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Grid -->
+            <div class="max-w-6xl w-full grid grid-cols-1 md:grid-cols-3 gap-8 px-4 border-t border-zinc-200 pt-16">
+                <div class="space-y-3">
+                    <div
+                        class="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-900 border border-zinc-200">
+                        <iconify-icon icon="lucide:shield-check" width="20"></iconify-icon>
+                    </div>
+                    <h3 class="font-medium text-zinc-900">Trustless Design</h3>
+                    <p class="text-sm text-zinc-500 leading-relaxed">Smart contracts handle the pooling and
+                        distribution. No central authority holds your funds.</p>
+                </div>
+                <div class="space-y-3">
+                    <div
+                        class="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-900 border border-zinc-200">
+                        <iconify-icon icon="lucide:zap" width="20"></iconify-icon>
+                    </div>
+                    <h3 class="font-medium text-zinc-900">Automated Rounds</h3>
+                    <p class="text-sm text-zinc-500 leading-relaxed">Payouts are calculated and executed automatically.
+                        Notifications keep everyone in sync.</p>
+                </div>
+                <div class="space-y-3">
+                    <div
+                        class="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-900 border border-zinc-200">
+                        <iconify-icon icon="lucide:coins" width="20"></iconify-icon>
+                    </div>
+                    <h3 class="font-medium text-zinc-900">Stablecoin Native</h3>
+                    <p class="text-sm text-zinc-500 leading-relaxed">Save in USDC, DAI, or ETH. Avoid volatility while
+                        you reach your savings goals.</p>
+                </div>
+            </div>
+
+            <footer
+                class="mt-20 py-8 border-t border-zinc-200 w-full max-w-6xl flex justify-between items-center text-xs text-zinc-400">
+                <div>&copy; 2023 Circa Finance.</div>
+                <div class="flex gap-4">
+                    <a href="#" class="hover:text-zinc-900">Twitter</a>
+                    <a href="#" class="hover:text-zinc-900">Github</a>
+                    <a href="#" class="hover:text-zinc-900">Discord</a>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- APP VIEW (Initially Hidden) -->
+    <div id="app-wrapper" class="hidden h-full flex-col relative z-30">
+        <!-- App Root -->
+        <div id="app" class="flex-1 flex flex-col h-full overflow-hidden relative">
+            <!-- Content injected via JS -->
+        </div>
+
+        <!-- Toast Container -->
+        <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+    </div>
+
+    <script>
+        // --- TRANSITION LOGIC ---
+        function transitionToApp() {
+            const landing = document.getElementById('landing-view');
+            const appWrapper = document.getElementById('app-wrapper');
+
+            landing.classList.add('fade-out');
+
+            setTimeout(() => {
+                landing.style.display = 'none';
+                appWrapper.classList.remove('hidden');
+                appWrapper.classList.add('flex', 'fade-in');
+
+                // Initialize App
+                render();
+            }, 300);
+        }
+
+        // --- MOCK API & DATA ---
+        const MOCK_USER = {
+            address: "0x71C...9A21",
+            balance: "4,250.00 USDC",
+            name: "Alex Doe",
+            handle: "@alexdoe"
+        };
+
+        const MOCK_GROUPS = [
+            {
+                id: "g1",
+                name: "Family Vacation Fund",
+                totalPool: 5000,
+                contribution: 500,
+                currency: "USDC",
+                frequency: "Monthly",
+                nextDate: "Oct 1, 2023",
+                myStatus: "pending",
+                currentRound: 3,
+                totalRounds: 10,
+                members: [
+                    { name: "You", address: "0x71...9A21", status: "pending", isTurn: false },
+                    { name: "Sarah L.", address: "0x82...1B34", status: "paid", isTurn: true },
+                    { name: "Mike R.", address: "0x11...8C99", status: "paid", isTurn: false },
+                    { name: "Jenny T.", address: "0x44...2D11", status: "pending", isTurn: false },
+                    { name: "Davido", address: "0x99...EE22", status: "pending", isTurn: false },
+                ],
+                activity: [
+                    { user: "Sarah L.", action: "paid", time: "2 hours ago" },
+                    { user: "Mike R.", action: "paid", time: "5 hours ago" }
+                ]
+            },
+            {
+                id: "g2",
+                name: "Tech Founders Circle",
+                totalPool: 12000,
+                contribution: 2000,
+                currency: "USDC",
+                frequency: "Weekly",
+                nextDate: "Sep 28, 2023",
+                myStatus: "paid",
+                currentRound: 5,
+                totalRounds: 6,
+                members: Array(6).fill(0).map((_, i) => ({ name: `Member ${i + 1}`, status: "paid" })),
+                activity: []
+            }
+        ];
+
+        const API = {
+            signup: (data) => new Promise(resolve => setTimeout(resolve, 800)),
+            login: () => new Promise(resolve => setTimeout(() => resolve(MOCK_USER), 800)),
+            getGroups: () => new Promise(resolve => setTimeout(() => resolve(MOCK_GROUPS), 400)),
+            pay: (groupId) => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1200)),
+            createGroup: (data) => new Promise(resolve => setTimeout(() => resolve({ ...data, id: "g_new" }), 1000))
+        };
+
+        // --- STATE MANAGEMENT ---
+        const state = {
+            view: 'signup-form', // signup-form, verify-email, login-wallet, dashboard, group-detail, create-group
+            user: null,
+            signupEmail: '',
+            groups: [],
+            activeGroupId: null,
+            loading: false
+        };
+
+        // --- RENDER ENGINE ---
+        const app = document.getElementById('app');
+
+        function render() {
+            app.innerHTML = '';
+
+            // Layout Logic
+            if (['signup-form', 'verify-email', 'login-wallet'].includes(state.view)) {
+                app.innerHTML = getAuthView();
+            } else {
+                // Main Layout
+                const layout = document.createElement('div');
+                layout.className = "flex h-full";
+                layout.innerHTML = `
+                    ${Sidebar()}
+                    <main class="flex-1 flex flex-col bg-white overflow-hidden relative">
+                        ${Header()}
+                        <div class="flex-1 overflow-y-auto p-4 md:p-8 fade-in">
+                            ${getViewContent()}
+                        </div>
+                    </main>
+                `;
+                app.appendChild(layout);
+            }
+            attachListeners();
+        }
+
+        function getAuthView() {
+            switch (state.view) {
+                case 'signup-form': return SignupFormView();
+                case 'verify-email': return VerifyEmailView();
+                case 'login-wallet': return LoginWalletView();
+                default: return SignupFormView();
+            }
+        }
+
+        function getViewContent() {
+            switch (state.view) {
+                case 'dashboard': return DashboardView();
+                case 'group-detail': return GroupDetailView();
+                case 'create-group': return CreateGroupView();
+                default: return DashboardView();
+            }
+        }
+
+        // --- COMPONENTS ---
+
+        const SignupFormView = () => `
+            <div class="flex flex-col items-center justify-center h-full bg-zinc-50 px-4 fade-in">
+                <div class="w-full max-w-sm bg-white border border-zinc-200 shadow-sm rounded-xl p-8">
+                    <div class="mb-6 flex justify-center">
+                        <div class="w-12 h-12 bg-zinc-900 rounded-lg flex items-center justify-center text-white">
+                            <iconify-icon icon="lucide:circle-dashed" width="24" stroke-width="1.5"></iconify-icon>
+                        </div>
+                    </div>
+                    <h1 class="text-xl font-semibold tracking-tight text-center text-zinc-900 mb-1">Create your account</h1>
+                    <p class="text-sm text-zinc-500 text-center mb-8">Enter your details to get started.</p>
+                    
+                    <form onsubmit="actions.handleSignup(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-700 mb-1.5 uppercase tracking-wide">Full Name</label>
+                            <input type="text" required placeholder="Alice Smith" class="w-full px-3 py-2.5 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all placeholder:text-zinc-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-700 mb-1.5 uppercase tracking-wide">Email Address</label>
+                            <input type="email" id="signup-email" required placeholder="alice@example.com" class="w-full px-3 py-2.5 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all placeholder:text-zinc-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-700 mb-1.5 uppercase tracking-wide">Display Name</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2.5 text-zinc-400 text-sm">@</span>
+                                <input type="text" required placeholder="alice" class="w-full pl-7 pr-3 py-2.5 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all placeholder:text-zinc-400">
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btn-signup" class="w-full mt-2 bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-sm py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 group shadow-sm">
+                            <span id="signup-text">Continue</span>
+                            <iconify-icon icon="lucide:arrow-right" width="16" class="text-zinc-400 group-hover:text-white transition-colors"></iconify-icon>
+                        </button>
+                    </form>
+                    
+                    <div class="mt-6 text-center">
+                        <p class="text-xs text-zinc-400">Already have an account? <a href="#" onclick="actions.goToWalletConnect()" class="text-zinc-900 font-medium hover:underline">Log in</a></p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const VerifyEmailView = () => `
+            <div class="flex flex-col items-center justify-center h-full bg-zinc-50 px-4 fade-in">
+                <div class="w-full max-w-sm bg-white border border-zinc-200 shadow-sm rounded-xl p-8 text-center">
+                    <div class="w-12 h-12 bg-zinc-50 border border-zinc-100 rounded-full flex items-center justify-center text-zinc-900 mx-auto mb-6">
+                        <iconify-icon icon="lucide:mail" width="24"></iconify-icon>
+                    </div>
+                    <h1 class="text-xl font-semibold tracking-tight text-zinc-900 mb-2">Check your email</h1>
+                    <p class="text-sm text-zinc-500 mb-6">We sent a magic link to <span class="font-medium text-zinc-900">${state.signupEmail}</span>. Click the link to complete your signup.</p>
+                    
+                    <div class="bg-zinc-50 p-4 rounded-lg border border-zinc-100 mb-6">
+                        <p class="text-xs text-zinc-400 italic mb-2">Simulation: Click below to emulate clicking the email link.</p>
+                        <button onclick="actions.simulateLinkClick()" class="w-full bg-white border border-zinc-200 text-zinc-900 font-medium text-xs py-2 rounded shadow-sm hover:bg-zinc-50 transition-colors">
+                            Simulate "Magic Link" Click
+                        </button>
+                    </div>
+
+                    <button onclick="router.navigate('signup-form')" class="text-xs text-zinc-400 hover:text-zinc-600 flex items-center justify-center gap-1">
+                        <iconify-icon icon="lucide:arrow-left" width="12"></iconify-icon> Back to Signup
+                    </button>
+                </div>
+            </div>
+        `;
+
+        const LoginWalletView = () => `
+            <div class="flex flex-col items-center justify-center h-full bg-zinc-50 px-4 fade-in">
+                <div class="w-full max-w-sm bg-white border border-zinc-200 shadow-sm rounded-xl p-8 text-center">
+                    <div class="mb-6 flex justify-center">
+                        <div class="w-12 h-12 bg-zinc-900 rounded-lg flex items-center justify-center text-white">
+                            <iconify-icon icon="lucide:circle-dashed" width="24" stroke-width="1.5"></iconify-icon>
+                        </div>
+                    </div>
+                    <h1 class="text-xl font-semibold tracking-tight text-zinc-900 mb-2">Connect Wallet</h1>
+                    <p class="text-sm text-zinc-500 mb-8">Connect your wallet to verify your identity.</p>
+                    
+                    <button id="btn-login" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-sm py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 group shadow-sm">
+                        <span id="login-text">Connect Wallet</span>
+                        <iconify-icon icon="lucide:wallet" width="16" class="text-zinc-400 group-hover:text-white transition-colors"></iconify-icon>
+                    </button>
+                    <p class="mt-4 text-xs text-zinc-400">By connecting, you agree to our Terms of Service.</p>
+                </div>
+            </div>
+        `;
+
+        const Sidebar = () => `
+            <aside class="hidden md:flex w-64 bg-zinc-50 border-r border-zinc-200 flex-col justify-between pt-6 pb-4">
+                <div>
+                    <div class="px-6 mb-8 flex items-center gap-2">
+                        <div class="w-6 h-6 bg-zinc-900 rounded flex items-center justify-center text-white">
+                            <iconify-icon icon="lucide:circle-dashed" width="14"></iconify-icon>
+                        </div>
+                        <span class="font-semibold tracking-tight text-zinc-900">Circa</span>
+                    </div>
+                    
+                    <nav class="px-3 space-y-0.5">
+                        ${NavItem('dashboard', 'lucide:layout-grid', 'Dashboard')}
+                        ${NavItem('create-group', 'lucide:plus-circle', 'New Group')}
+                        <div class="px-3 pt-6 pb-2 text-xs font-medium text-zinc-400 uppercase tracking-wider">Your Groups</div>
+                        ${state.groups.map(g => `
+                            <button onclick="router.navigateToGroup('${g.id}')" class="w-full flex items-center gap-3 px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-100/50 hover:text-zinc-900 rounded-md transition-colors ${state.activeGroupId === g.id && state.view === 'group-detail' ? 'bg-zinc-100 text-zinc-900 font-medium' : ''}">
+                                <div class="w-1.5 h-1.5 rounded-full ${g.myStatus === 'pending' ? 'bg-amber-500' : 'bg-emerald-500'}"></div>
+                                <span class="truncate">${g.name}</span>
+                            </button>
+                        `).join('')}
+                    </nav>
+                </div>
+
+                <div class="px-4">
+                    <div class="bg-white border border-zinc-200 rounded-lg p-3 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-zinc-200 to-zinc-100 border border-zinc-100 flex items-center justify-center text-xs font-semibold text-zinc-600">
+                                ${state.user ? state.user.name.charAt(0) : 'U'}
+                            </div>
+                            <div class="flex-1 overflow-hidden">
+                                <p class="text-xs font-medium text-zinc-900 truncate">${state.user ? state.user.name : ''}</p>
+                                <p class="text-xs text-zinc-500 truncate">${state.user ? state.user.handle : ''}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        `;
+
+        const NavItem = (viewName, icon, label) => `
+            <button onclick="router.navigate('${viewName}')" class="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${state.view === viewName ? 'bg-zinc-200/50 text-zinc-900 font-medium' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'}">
+                <iconify-icon icon="${icon}" width="18" stroke-width="1.5"></iconify-icon>
+                ${label}
+            </button>
+        `;
+
+        const Header = () => `
+            <header class="md:hidden h-14 bg-white border-b border-zinc-200 flex items-center justify-between px-4 sticky top-0 z-20">
+                <div class="flex items-center gap-2">
+                     <div class="w-6 h-6 bg-zinc-900 rounded flex items-center justify-center text-white">
+                        <iconify-icon icon="lucide:circle-dashed" width="14"></iconify-icon>
+                    </div>
+                    <span class="font-semibold tracking-tight">Circa</span>
+                </div>
+                <button class="text-zinc-500">
+                    <iconify-icon icon="lucide:menu" width="24"></iconify-icon>
+                </button>
+            </header>
+        `;
+
+        const DashboardView = () => {
+            const pendingGroups = state.groups.filter(g => g.myStatus === 'pending');
+            const nextPayment = pendingGroups[0];
+
+            return `
+                <div class="max-w-4xl mx-auto space-y-8">
+                    <div>
+                        <h2 class="text-lg font-medium text-zinc-900 tracking-tight">Overview</h2>
+                        <p class="text-sm text-zinc-500">Welcome back, ${state.user.name.split(' ')[0]}. You have ${pendingGroups.length} pending contributions.</p>
+                    </div>
+
+                    ${nextPayment ? `
+                    <div class="bg-white border border-zinc-200 rounded-xl shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)] overflow-hidden">
+                        <div class="p-6 border-b border-zinc-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">Action Required</span>
+                                    <span class="text-xs text-zinc-400">Due ${nextPayment.nextDate}</span>
+                                </div>
+                                <h3 class="text-base font-semibold text-zinc-900">${nextPayment.name}</h3>
+                                <p class="text-sm text-zinc-500">Round ${nextPayment.currentRound} of ${nextPayment.totalRounds}</p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="text-right">
+                                    <div class="text-lg font-semibold text-zinc-900">${nextPayment.contribution} ${nextPayment.currency}</div>
+                                    <div class="text-xs text-zinc-500">Contribution</div>
+                                </div>
+                                <button onclick="router.navigateToGroup('${nextPayment.id}')" class="bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                                    Review
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    ` : `
+                    <div class="bg-zinc-50 border border-zinc-200 border-dashed rounded-xl p-8 text-center">
+                         <div class="w-12 h-12 bg-white border border-zinc-200 rounded-full flex items-center justify-center text-zinc-400 mx-auto mb-3 shadow-sm">
+                            <iconify-icon icon="lucide:check" width="20"></iconify-icon>
+                        </div>
+                        <h3 class="text-sm font-medium text-zinc-900">All caught up</h3>
+                        <p class="text-xs text-zinc-500 mt-1">No pending payments for any active groups.</p>
+                    </div>
+                    `}
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-sm font-medium text-zinc-900">Active Groups</h3>
+                                <iconify-icon icon="lucide:users" class="text-zinc-400" width="16"></iconify-icon>
+                            </div>
+                            <div class="space-y-3">
+                                ${state.groups.map(g => `
+                                    <div onclick="router.navigateToGroup('${g.id}')" class="group flex items-center justify-between p-3 rounded-lg border border-zinc-100 hover:border-zinc-300 hover:bg-zinc-50 cursor-pointer transition-all">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded bg-zinc-100 flex items-center justify-center text-zinc-500 text-xs font-medium">
+                                                ${g.name.substring(0, 2).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <div class="text-sm font-medium text-zinc-900 group-hover:text-black">${g.name}</div>
+                                                <div class="text-xs text-zinc-500">Next payout: ${g.totalPool} ${g.currency}</div>
+                                            </div>
+                                        </div>
+                                        <iconify-icon icon="lucide:chevron-right" class="text-zinc-300 group-hover:text-zinc-600 transition-colors" width="16"></iconify-icon>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                         <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm flex flex-col items-center justify-center text-center">
+                            <div class="w-10 h-10 bg-zinc-50 rounded-full flex items-center justify-center text-zinc-400 mb-3 border border-zinc-100">
+                                <iconify-icon icon="lucide:plus" width="20"></iconify-icon>
+                            </div>
+                            <h3 class="text-sm font-medium text-zinc-900">Start a new Circle</h3>
+                            <p class="text-xs text-zinc-500 mt-1 mb-4 max-w-[200px]">Create a private group, invite friends, and save together.</p>
+                            <button onclick="router.navigate('create-group')" class="text-sm font-medium text-zinc-900 border border-zinc-200 hover:bg-zinc-50 px-4 py-2 rounded-lg transition-colors w-full">Create Group</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const GroupDetailView = () => {
+            const group = state.groups.find(g => g.id === state.activeGroupId);
+            if (!group) return `<div>Group not found</div>`;
+
+            const currentRecipient = group.members.find(m => m.isTurn);
+            const isMeRecipient = currentRecipient.address === MOCK_USER.address.substring(0, 10);
+
+            return `
+                <div class="max-w-4xl mx-auto pb-20">
+                    <!-- Navigation & Title -->
+                    <div class="flex items-center gap-2 text-xs text-zinc-500 mb-4">
+                        <span onclick="router.navigate('dashboard')" class="cursor-pointer hover:text-zinc-900">Dashboard</span>
+                        <span>/</span>
+                        <span class="text-zinc-900">Group Details</span>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
+                        <div>
+                            <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 mb-1">${group.name}</h1>
+                            <div class="flex items-center gap-3 text-sm text-zinc-500">
+                                <span class="flex items-center gap-1"><iconify-icon icon="lucide:lock" width="12"></iconify-icon> Private Group</span>
+                                <span class="w-1 h-1 rounded-full bg-zinc-300"></span>
+                                <span>${group.frequency}</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="px-3 py-2 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 shadow-sm transition-colors flex items-center gap-2">
+                                <iconify-icon icon="lucide:user-plus" width="16"></iconify-icon> Invite
+                            </button>
+                            <button class="px-3 py-2 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 shadow-sm transition-colors">
+                                <iconify-icon icon="lucide:settings" width="16"></iconify-icon>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main Stats Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <div class="bg-zinc-900 text-white rounded-xl p-5 shadow-lg relative overflow-hidden group">
+                            <div class="absolute top-0 right-0 p-3 opacity-10">
+                                <iconify-icon icon="lucide:banknote" width="60"></iconify-icon>
+                            </div>
+                            <div class="relative z-10">
+                                <p class="text-zinc-400 text-xs font-medium uppercase tracking-wider mb-1">Total Pool</p>
+                                <div class="text-2xl font-semibold tracking-tight">${group.totalPool.toLocaleString()} ${group.currency}</div>
+                                <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between text-xs">
+                                    <span class="text-zinc-400">Recipient this round</span>
+                                    <span class="font-medium text-white bg-zinc-800 px-2 py-0.5 rounded">${currentRecipient ? currentRecipient.name : 'None'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
+                            <p class="text-zinc-500 text-xs font-medium uppercase tracking-wider mb-1">Your Contribution</p>
+                            <div class="text-2xl font-semibold tracking-tight text-zinc-900">${group.contribution.toLocaleString()} <span class="text-sm text-zinc-500 font-normal">${group.currency}</span></div>
+                            
+                            ${group.myStatus === 'pending' ? `
+                                <button onclick="actions.pay('${group.id}')" id="pay-btn" class="mt-4 w-full bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium py-2 rounded-lg transition-all flex items-center justify-center gap-2">
+                                    <span>Pay Contribution</span>
+                                </button>
+                            ` : `
+                                <div class="mt-4 w-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-sm font-medium py-2 rounded-lg flex items-center justify-center gap-2 cursor-default">
+                                    <iconify-icon icon="lucide:check-circle-2" width="16"></iconify-icon>
+                                    <span>Paid for Round ${group.currentRound}</span>
+                                </div>
+                            `}
+                        </div>
+
+                        <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <p class="text-zinc-500 text-xs font-medium uppercase tracking-wider mb-1">Progress</p>
+                                <div class="flex items-end gap-1">
+                                    <div class="text-2xl font-semibold tracking-tight text-zinc-900">Round ${group.currentRound}</div>
+                                    <div class="text-sm text-zinc-500 mb-1">/ ${group.totalRounds}</div>
+                                </div>
+                            </div>
+                            <div class="w-full bg-zinc-100 rounded-full h-2 mt-4 overflow-hidden">
+                                <div class="bg-zinc-900 h-2 rounded-full" style="width: ${(group.currentRound / group.totalRounds) * 100}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Members List -->
+                        <div class="lg:col-span-2 space-y-4">
+                            <h3 class="text-sm font-medium text-zinc-900">Round Members</h3>
+                            <div class="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
+                                <table class="w-full text-sm text-left">
+                                    <thead class="bg-zinc-50 text-zinc-500 font-medium border-b border-zinc-200">
+                                        <tr>
+                                            <th class="px-5 py-3 font-medium">Member</th>
+                                            <th class="px-5 py-3 font-medium text-right">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-zinc-100">
+                                        ${group.members.map(m => `
+                                            <tr class="group hover:bg-zinc-50/50 transition-colors">
+                                                <td class="px-5 py-3">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-zinc-100 to-zinc-200 flex items-center justify-center text-xs font-semibold text-zinc-600 border border-zinc-100">
+                                                            ${m.name.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <div class="font-medium text-zinc-900 flex items-center gap-2">
+                                                                ${m.name}
+                                                                ${m.isTurn ? '<span class="text-[10px] bg-zinc-900 text-white px-1.5 py-0.5 rounded uppercase tracking-wide">Receiver</span>' : ''}
+                                                            </div>
+                                                            <div class="text-xs text-zinc-500 font-mono">${m.address}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-5 py-3 text-right">
+                                                    ${m.status === 'paid'
+                    ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">Paid</span>`
+                    : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-600 border border-zinc-200">Pending</span>`
+                }
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Activity Feed -->
+                        <div class="space-y-4">
+                            <h3 class="text-sm font-medium text-zinc-900">Recent Activity</h3>
+                            <div class="relative pl-4 space-y-6 before:absolute before:inset-y-0 before:left-0 before:w-px before:bg-zinc-200">
+                                ${group.activity.length > 0 ? group.activity.map(act => `
+                                    <div class="relative">
+                                        <div class="absolute -left-5 top-1 w-2.5 h-2.5 bg-zinc-200 rounded-full border-2 border-white"></div>
+                                        <p class="text-sm text-zinc-900"><span class="font-medium">${act.user}</span> contributed.</p>
+                                        <p class="text-xs text-zinc-400 mt-0.5">${act.time}</p>
+                                    </div>
+                                `).join('') : `
+                                    <div class="text-xs text-zinc-400 italic">No activity yet this round.</div>
+                                `}
+                                <div class="relative">
+                                    <div class="absolute -left-5 top-1 w-2.5 h-2.5 bg-zinc-900 rounded-full border-2 border-white"></div>
+                                    <p class="text-sm text-zinc-900 font-medium">Round ${group.currentRound} Started</p>
+                                    <p class="text-xs text-zinc-400 mt-0.5">Oct 1, 2023</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const CreateGroupView = () => `
+            <div class="max-w-2xl mx-auto">
+                 <div class="flex items-center gap-2 text-xs text-zinc-500 mb-6">
+                    <span onclick="router.navigate('dashboard')" class="cursor-pointer hover:text-zinc-900">Dashboard</span>
+                    <span>/</span>
+                    <span class="text-zinc-900">New Group</span>
+                </div>
+
+                <div class="bg-white border border-zinc-200 rounded-xl shadow-sm p-6 md:p-8">
+                    <h2 class="text-xl font-semibold tracking-tight text-zinc-900 mb-1">Create a Circle</h2>
+                    <p class="text-sm text-zinc-500 mb-8">Set up a private ROSCA group. Invite friends after creation.</p>
+
+                    <form onsubmit="actions.handleCreate(event)" class="space-y-6">
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-700 mb-1.5 uppercase tracking-wide">Group Name</label>
+                            <input type="text" required placeholder="e.g. Summer Vacation Fund" class="w-full px-3 py-2.5 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all placeholder:text-zinc-400">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-zinc-700 mb-1.5 uppercase tracking-wide">Contribution Amount</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2.5 text-zinc-400 text-sm">$</span>
+                                    <input type="number" required placeholder="100" class="w-full pl-7 pr-3 py-2.5 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-zinc-700 mb-1.5 uppercase tracking-wide">Asset</label>
+                                <select class="w-full px-3 py-2.5 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all">
+                                    <option>USDC</option>
+                                    <option>DAI</option>
+                                    <option>ETH</option>
+                                </select>
+                            </div>
+                        </div>
+
+                         <div>
+                            <label class="block text-xs font-medium text-zinc-700 mb-1.5 uppercase tracking-wide">Payout Frequency</label>
+                            <div class="grid grid-cols-3 gap-3">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="freq" class="peer sr-only" checked>
+                                    <div class="text-center py-2.5 border border-zinc-200 rounded-lg text-sm text-zinc-600 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900 transition-all hover:bg-zinc-50">Weekly</div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="freq" class="peer sr-only">
+                                    <div class="text-center py-2.5 border border-zinc-200 rounded-lg text-sm text-zinc-600 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900 transition-all hover:bg-zinc-50">Bi-Weekly</div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="freq" class="peer sr-only">
+                                    <div class="text-center py-2.5 border border-zinc-200 rounded-lg text-sm text-zinc-600 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900 transition-all hover:bg-zinc-50">Monthly</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-zinc-100 flex items-center justify-between">
+                             <div class="flex items-center gap-3">
+                                <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
+                                    <input type="checkbox" name="toggle" id="toggle" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-2 border-zinc-300 appearance-none cursor-pointer top-1 left-1 transition-all duration-300"/>
+                                    <label for="toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-200 cursor-pointer transition-colors duration-300"></label>
+                                </div>
+                                <label for="toggle" class="text-sm text-zinc-600 cursor-pointer select-none">Publicly Visible (Discovery)</label>
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="submit" id="create-btn" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-sm py-3 rounded-lg transition-all shadow-md shadow-zinc-900/5">
+                                Create Group
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        // --- CONTROLLERS & LOGIC ---
+
+        const router = {
+            navigate: (view) => {
+                state.view = view;
+                render();
+            },
+            navigateToGroup: (id) => {
+                state.activeGroupId = id;
+                router.navigate('group-detail');
+            }
+        };
+
+        const actions = {
+            handleSignup: async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('btn-signup');
+                const txt = document.getElementById('signup-text');
+                const emailInput = document.getElementById('signup-email');
+                const originalText = txt.innerText;
+
+                state.signupEmail = emailInput.value;
+
+                txt.innerText = "Creating account...";
+                btn.disabled = true;
+
+                try {
+                    await API.signup();
+                    router.navigate('verify-email');
+                } catch (e) {
+                    toast.error('Signup failed');
+                    txt.innerText = originalText;
+                    btn.disabled = false;
+                }
+            },
+
+            simulateLinkClick: () => {
+                toast.success('Magic link verified');
+                setTimeout(() => {
+                    router.navigate('login-wallet');
+                }, 500);
+            },
+
+            goToWalletConnect: () => {
+                router.navigate('login-wallet');
+            },
+
+            login: async () => {
+                const btn = document.getElementById('btn-login');
+                const txt = document.getElementById('login-text');
+                const originalText = txt.innerText;
+
+                txt.innerText = "Connecting...";
+                btn.disabled = true;
+
+                try {
+                    const user = await API.login();
+                    const groups = await API.getGroups();
+                    state.user = user;
+                    state.groups = groups;
+                    state.view = 'dashboard';
+                    render();
+                    toast.success('Wallet connected successfully');
+                } catch (e) {
+                    toast.error('Connection failed');
+                    txt.innerText = originalText;
+                    btn.disabled = false;
+                }
+            },
+
+            pay: async (groupId) => {
+                const btn = document.getElementById('pay-btn');
+                if (!btn) return;
+
+                btn.innerHTML = `<div class="loader ease-linear rounded-full border-2 border-t-2 border-white h-4 w-4 mr-2"></div> Processing...`;
+                btn.disabled = true;
+
+                try {
+                    await API.pay(groupId);
+
+                    // Optimistic update
+                    const group = state.groups.find(g => g.id === groupId);
+                    group.myStatus = 'paid';
+
+                    const me = group.members.find(m => m.name === "You");
+                    if (me) me.status = 'paid';
+
+                    group.activity.unshift({ user: "You", action: "paid", time: "Just now" });
+
+                    render();
+                    toast.success('Contribution paid successfully');
+                } catch (e) {
+                    toast.error('Transaction failed');
+                    btn.innerHTML = 'Pay Contribution';
+                    btn.disabled = false;
+                }
+            },
+
+            handleCreate: async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('create-btn');
+                const originalText = btn.innerText;
+
+                btn.innerHTML = `<div class="loader ease-linear rounded-full border-2 border-t-2 border-white h-4 w-4 inline-block mr-2"></div> Creating Contract...`;
+                btn.disabled = true;
+
+                try {
+                    await API.createGroup({});
+                    toast.success('Group created on-chain');
+                    // Add dummy group to state
+                    state.groups.push({
+                        id: "g" + Math.random(),
+                        name: e.target[0].value || "New Group",
+                        totalPool: 0,
+                        contribution: e.target[1].value,
+                        currency: e.target[2].value,
+                        frequency: "Weekly",
+                        myStatus: "pending",
+                        currentRound: 1,
+                        totalRounds: 10,
+                        members: [{ name: "You", address: state.user.address, status: "pending", isTurn: true }],
+                        activity: []
+                    });
+                    setTimeout(() => {
+                        router.navigate('dashboard');
+                    }, 500);
+                } catch (e) {
+                    toast.error('Creation failed');
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            }
+        };
+
+        const toast = {
+            show: (msg, type) => {
+                const container = document.getElementById('toast-container');
+                const el = document.createElement('div');
+                const bg = type === 'success' ? 'bg-zinc-900 text-white' : 'bg-red-600 text-white';
+                const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+
+                el.className = `${bg} px-4 py-3 rounded-lg shadow-lg text-sm font-medium flex items-center gap-3 transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-auto min-w-[300px]`;
+                el.innerHTML = `
+                    <iconify-icon icon="lucide:${icon}" width="16"></iconify-icon>
+                    ${msg}
+                `;
+
+                container.appendChild(el);
+
+                requestAnimationFrame(() => {
+                    el.classList.remove('translate-y-10', 'opacity-0');
+                });
+
+                setTimeout(() => {
+                    el.classList.add('translate-y-10', 'opacity-0');
+                    setTimeout(() => el.remove(), 300);
+                }, 3000);
+            },
+            success: (msg) => toast.show(msg, 'success'),
+            error: (msg) => toast.show(msg, 'error')
+        };
+
+        function attachListeners() {
+            const loginBtn = document.getElementById('btn-login');
+            if (loginBtn) loginBtn.onclick = actions.login;
+        }
+
+    </script>
+</body>
+
+</html>

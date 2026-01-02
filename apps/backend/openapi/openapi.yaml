@@ -1,0 +1,1639 @@
+openapi: 3.0.3 # This matches the pattern
+
+info:
+  title: Circa
+  description: API Specification for Circa (Ajọra) - private rotating savings groups with wallet-based auth.
+  version: 0.0.1
+
+tags:
+  - name: auth
+    description: Wallet-based authentication (nonce + signature verification) using HttpOnly session cookies
+  - name: profile
+    description: Authenticated user profile
+  - name: groups
+    description: Private groups and membership
+  - name: invites
+    description: Invite codes for private group access
+  - name: rounds
+    description: Ajo rounds (on-chain mapped) and activity feeds
+
+security:
+  - SessionAuth: []
+
+paths:
+  # -----------------------------
+  # AUTH
+  # -----------------------------
+  /auth/nonce:
+    post:
+      tags: [auth]
+      summary: Request a nonce for wallet sign-in
+      operationId: authNonce
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthNonceRequest"
+      responses:
+        "200":
+          description: Nonce issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthNonceResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequest"
+
+  /auth/verify:
+    post:
+      tags: [auth]
+      summary: Verify wallet signature and create a session (sets HttpOnly cookie)
+      operationId: authVerify
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthVerifyRequest"
+      responses:
+        "200":
+          description: Signed in successfully (session cookie set)
+          headers:
+            Set-Cookie:
+              description: HttpOnly session cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthVerifyResponse"
+        "400":
+          description: Bad Request (invalid payload, expired/used nonce, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequest"
+        "401":
+          description: Unauthorized (signature invalid)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Logout (clears session)
+      operationId: authLogout
+      responses:
+        "204":
+          description: Logged out (session cleared)
+        "401":
+          description: Unauthorized (no session)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+
+  # -----------------------------
+  # PROFILE
+  # -----------------------------
+  /me:
+    get:
+      tags: [profile]
+      summary: Get current user profile
+      operationId: getMe
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized (no valid session)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+
+    patch:
+      tags: [profile]
+      summary: Update current user profile
+      operationId: updateMe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMeRequest"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequest"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+
+  # -----------------------------
+  # GROUPS
+  # -----------------------------
+  /groups:
+    get:
+      tags: [groups]
+      summary: List groups the current user belongs to
+      operationId: listGroups
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional search string for group name
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Groups
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupPage"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+
+    post:
+      tags: [groups]
+      summary: Create a private group
+      operationId: createGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupRequest"
+      responses:
+        "201":
+          description: Group created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequest"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+
+  /groups/{groupId}:
+    get:
+      tags: [groups]
+      summary: Get a group (members only)
+      operationId: getGroup
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Group detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+        "403":
+          description: Forbidden (not a member)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+    patch:
+      tags: [groups]
+      summary: Update group metadata (owner only)
+      operationId: updateGroup
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGroupRequest"
+      responses:
+        "200":
+          description: Group updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequest"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+        "403":
+          description: Forbidden (not owner)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+  /groups/{groupId}/members:
+    get:
+      tags: [groups]
+      summary: List group members (members only)
+      operationId: listGroupMembers
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupMember"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+        "403":
+          description: Forbidden (not a member)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+  /groups/{groupId}/members/{memberAddress}:
+    delete:
+      tags: [groups]
+      summary: Remove a member from a group (owner only)
+      operationId: removeGroupMember
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: memberAddress
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Address"
+      responses:
+        "204":
+          description: Member removed
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+        "403":
+          description: Forbidden (not owner)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+  /groups/{groupId}/leave:
+    post:
+      tags: [groups]
+      summary: Leave a group (member only; owner cannot leave unless transfer ownership is supported)
+      operationId: leaveGroup
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "204":
+          description: Left group
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+        "403":
+          description: Forbidden (not a member / owner cannot leave)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+  # -----------------------------
+  # INVITES
+  # -----------------------------
+  /groups/{groupId}/invites:
+    get:
+      tags: [invites]
+      summary: List invites for a group (owner only)
+      operationId: listInvites
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Invites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InviteSummary"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+        "403":
+          description: Forbidden (not owner)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+    post:
+      tags: [invites]
+      summary: Create an invite code (group owner only)
+      operationId: createInvite
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInviteRequest"
+      responses:
+        "201":
+          description: Invite created (code returned only at creation)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invite"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequest"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+        "403":
+          description: Forbidden (not group owner)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+  /groups/{groupId}/invites/{inviteId}:
+    delete:
+      tags: [invites]
+      summary: Revoke an invite (owner only)
+      operationId: revokeInvite
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: inviteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "204":
+          description: Invite revoked
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+        "403":
+          description: Forbidden (not owner)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+  /invites/preview:
+    post:
+      tags: [invites]
+      summary: Preview an invite code (returns group info without joining)
+      operationId: previewInvite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteCodeRequest"
+      responses:
+        "200":
+          description: Invite preview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitePreview"
+        "400":
+          description: Bad Request (invalid format)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequest"
+        "404":
+          description: Not Found (invite invalid/expired)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+  /invites/accept:
+    post:
+      tags: [invites]
+      summary: Accept an invite code to join a private group
+      operationId: acceptInvite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptInviteRequest"
+      responses:
+        "200":
+          description: Invite accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcceptInviteResponse"
+        "400":
+          description: Bad Request (invalid/expired/maxed invite)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequest"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+        "404":
+          description: Not Found (invite not found)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+  # -----------------------------
+  # ROUNDS
+  # -----------------------------
+  /rounds:
+    get:
+      tags: [rounds]
+      summary: List rounds accessible to the current user
+      operationId: listRounds
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pending, active, completed]
+        - name: groupId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Rounds page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoundPage"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+
+  /groups/{groupId}/rounds:
+    get:
+      tags: [rounds]
+      summary: List rounds for a group (members only)
+      operationId: listGroupRounds
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pending, active, completed]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Rounds page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoundPage"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+        "403":
+          description: Forbidden (not a member)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+    post:
+      tags: [rounds]
+      summary: Create a round record for a group (members/owner; stores on-chain mapping)
+      operationId: createRound
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoundRequest"
+      responses:
+        "201":
+          description: Round created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Round"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequest"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+        "403":
+          description: Forbidden (not permitted)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorForbidden"
+        "404":
+          description: Not Found (group)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+  /rounds/{roundId}:
+    get:
+      tags: [rounds]
+      summary: Get round details (members only)
+      operationId: getRound
+      parameters:
+        - name: roundId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Round detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoundDetail"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+        "403":
+          description: Forbidden (not a member of the group)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+  /rounds/{roundId}/activity:
+    get:
+      tags: [rounds]
+      summary: Get round activity feed (payments + payouts) (members only)
+      operationId: getRoundActivity
+      parameters:
+        - name: roundId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [payment, payout]
+      responses:
+        "200":
+          description: Activity feed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityPage"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+  /rounds/{roundId}/periods:
+    get:
+      tags: [rounds]
+      summary: Get per-period contribution status (members only)
+      operationId: getRoundPeriods
+      parameters:
+        - name: roundId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Period status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoundPeriodStatus"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternalServerError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNotFound"
+
+components:
+  securitySchemes:
+    SessionAuth:
+      type: apiKey
+      in: cookie
+      name: circa_session
+
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+
+    Address:
+      type: string
+      description: EVM address (0x-prefixed, 40 hex chars)
+      pattern: "^0x[a-fA-F0-9]{40}$"
+
+    ChainId:
+      type: integer
+      minimum: 1
+      description: EVM chain id
+
+    Timestamp:
+      type: string
+      format: date-time
+
+    ErrorBadRequest:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 400
+        message:
+          type: string
+          example: Bad request
+
+    ErrorUnauthorized:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 401
+        message:
+          type: string
+          example: Unauthorized
+
+    ErrorForbidden:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 403
+        message:
+          type: string
+          example: Forbidden
+
+    ErrorNotFound:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 404
+        message:
+          type: string
+          example: Not found
+
+    # -----------------------------
+    # AUTH SCHEMAS
+    # -----------------------------
+    AuthNonceRequest:
+      type: object
+      required: [address]
+      properties:
+        address:
+          $ref: "#/components/schemas/Address"
+        chainId:
+          $ref: "#/components/schemas/ChainId"
+      additionalProperties: false
+
+    AuthNonceResponse:
+      type: object
+      required: [nonce, expiresAt]
+      properties:
+        nonce:
+          type: string
+          description: One-time nonce used for wallet sign-in (hex-encoded)
+          pattern: "^0x[a-fA-F0-9]+$"
+        expiresAt:
+          $ref: "#/components/schemas/Timestamp"
+        messageTemplate:
+          type: string
+          description: Optional template the client can use to construct the sign-in message
+
+    AuthVerifyRequest:
+      type: object
+      required: [address, signature, message]
+      properties:
+        address:
+          $ref: "#/components/schemas/Address"
+        signature:
+          type: string
+          description: ECDSA signature of the message (hex-encoded, 0x-prefixed)
+          pattern: "^0x[a-fA-F0-9]{130}$"
+        message:
+          type: string
+          description: The exact message that was signed (must include nonce and domain binding)
+      additionalProperties: false
+
+    AuthVerifyResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+
+    # -----------------------------
+    # USER / PROFILE
+    # -----------------------------
+    User:
+      type: object
+      required: [id, address, createdAt]
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        address:
+          $ref: "#/components/schemas/Address"
+        displayName:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        updatedAt:
+          $ref: "#/components/schemas/Timestamp"
+          nullable: true
+
+    UpdateMeRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 50
+        avatarUrl:
+          type: string
+          format: uri
+      additionalProperties: false
+
+    # -----------------------------
+    # GROUPS
+    # -----------------------------
+    GroupSummary:
+      type: object
+      required: [id, name, memberCount, createdAt]
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        memberCount:
+          type: integer
+          minimum: 1
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        updatedAt:
+          $ref: "#/components/schemas/Timestamp"
+          nullable: true
+
+    GroupMember:
+      type: object
+      required: [address, status, role]
+      properties:
+        address:
+          $ref: "#/components/schemas/Address"
+        displayName:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [owner, member]
+        status:
+          type: string
+          enum: [invited, accepted, removed]
+        joinedAt:
+          $ref: "#/components/schemas/Timestamp"
+          nullable: true
+
+    Group:
+      allOf:
+        - $ref: "#/components/schemas/GroupSummary"
+        - type: object
+          required: [ownerAddress, members]
+          properties:
+            ownerAddress:
+              $ref: "#/components/schemas/Address"
+            members:
+              type: array
+              items:
+                $ref: "#/components/schemas/GroupMember"
+
+    GroupPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupSummary"
+        nextCursor:
+          type: string
+          nullable: true
+
+    CreateGroupRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        description:
+          type: string
+          maxLength: 280
+        avatarUrl:
+          type: string
+          format: uri
+      additionalProperties: false
+
+    UpdateGroupRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        description:
+          type: string
+          maxLength: 280
+        avatarUrl:
+          type: string
+          format: uri
+      additionalProperties: false
+
+    # -----------------------------
+    # INVITES
+    # -----------------------------
+    CreateInviteRequest:
+      type: object
+      properties:
+        maxUses:
+          type: integer
+          minimum: 1
+          default: 1
+        expiresAt:
+          $ref: "#/components/schemas/Timestamp"
+      additionalProperties: false
+
+    Invite:
+      type: object
+      required: [id, groupId, code, uses, maxUses, createdAt]
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        groupId:
+          $ref: "#/components/schemas/UUID"
+        code:
+          type: string
+          description: Invite code (returned only at creation time)
+        uses:
+          type: integer
+          minimum: 0
+        maxUses:
+          type: integer
+          minimum: 1
+        expiresAt:
+          $ref: "#/components/schemas/Timestamp"
+          nullable: true
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+
+    InviteSummary:
+      type: object
+      required: [id, groupId, uses, maxUses, createdAt, status]
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        groupId:
+          $ref: "#/components/schemas/UUID"
+        uses:
+          type: integer
+          minimum: 0
+        maxUses:
+          type: integer
+          minimum: 1
+        expiresAt:
+          $ref: "#/components/schemas/Timestamp"
+          nullable: true
+        status:
+          type: string
+          enum: [active, expired, revoked, maxed]
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+
+    InviteCodeRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+      additionalProperties: false
+
+    InvitePreview:
+      type: object
+      required: [groupId, groupName]
+      properties:
+        groupId:
+          $ref: "#/components/schemas/UUID"
+        groupName:
+          type: string
+        groupAvatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        memberCount:
+          type: integer
+          minimum: 1
+
+    AcceptInviteRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          minLength: 1
+          description: Invite code
+      additionalProperties: false
+
+    AcceptInviteResponse:
+      type: object
+      required: [groupId]
+      properties:
+        groupId:
+          $ref: "#/components/schemas/UUID"
+
+    # -----------------------------
+    # ROUNDS
+    # -----------------------------
+    Round:
+      type: object
+      required:
+        [id, groupId, chainId, contractAddress, contributionAmount, periodDurationSeconds, createdAt, status]
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        groupId:
+          $ref: "#/components/schemas/UUID"
+        chainId:
+          $ref: "#/components/schemas/ChainId"
+        contractAddress:
+          $ref: "#/components/schemas/Address"
+        contributionAmount:
+          type: string
+          description: Contribution amount in smallest units (string to avoid JSON number limits)
+        currencySymbol:
+          type: string
+          nullable: true
+          description: e.g. USDC (optional)
+        periodDurationSeconds:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum: [pending, active, completed]
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+
+    RoundSummary:
+      allOf:
+        - $ref: "#/components/schemas/Round"
+        - type: object
+          properties:
+            groupName:
+              type: string
+            currentPeriod:
+              type: integer
+              minimum: 0
+              nullable: true
+            paidCount:
+              type: integer
+              minimum: 0
+              nullable: true
+            memberCount:
+              type: integer
+              minimum: 1
+              nullable: true
+
+    RoundPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoundSummary"
+        nextCursor:
+          type: string
+          nullable: true
+
+    CreateRoundRequest:
+      type: object
+      required: [chainId, contractAddress, contributionAmount, periodDurationSeconds]
+      properties:
+        chainId:
+          $ref: "#/components/schemas/ChainId"
+        contractAddress:
+          $ref: "#/components/schemas/Address"
+        contributionAmount:
+          type: string
+          description: Contribution amount in smallest units (string to avoid JSON number limits)
+          pattern: "^[0-9]+$"
+        currencySymbol:
+          type: string
+          maxLength: 10
+          description: Optional currency symbol (e.g. USDC)
+      additionalProperties: false
+
+    RoundDetail:
+      allOf:
+        - $ref: "#/components/schemas/Round"
+        - type: object
+          required: [groupName, memberCount]
+          properties:
+            groupName:
+              type: string
+            memberCount:
+              type: integer
+              minimum: 1
+            currentPeriod:
+              type: integer
+              minimum: 0
+              nullable: true
+            paidCount:
+              type: integer
+              minimum: 0
+              nullable: true
+            nextPayoutAddress:
+              $ref: "#/components/schemas/Address"
+              nullable: true
+              description: Address expected to receive the next payout
+            totalContributed:
+              type: string
+              nullable: true
+              description: Total amount contributed so far (in smallest units)
+              pattern: "^[0-9]+$"
+
+    ActivityItem:
+      type: object
+      required: [id, type, timestamp]
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        type:
+          type: string
+          enum: [payment, payout]
+        address:
+          $ref: "#/components/schemas/Address"
+          description: Address that made the payment or received the payout
+        amount:
+          type: string
+          description: Amount in smallest units
+          pattern: "^[0-9]+$"
+        transactionHash:
+          type: string
+          description: On-chain transaction hash
+          pattern: "^0x[a-fA-F0-9]{64}$"
+        blockNumber:
+          type: integer
+          minimum: 0
+          nullable: true
+        timestamp:
+          $ref: "#/components/schemas/Timestamp"
+        period:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Period number this activity belongs to
+
+    ActivityPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+        nextCursor:
+          type: string
+          nullable: true
+
+    RoundPeriodStatus:
+      type: object
+      required: [period, status]
+      properties:
+        period:
+          type: integer
+          minimum: 0
+          description: Period number (0-indexed)
+        status:
+          type: string
+          enum: [pending, active, completed]
+        paidAddresses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Address"
+          description: Addresses that have contributed to this period
+        payoutAddress:
+          $ref: "#/components/schemas/Address"
+          nullable: true
+          description: Address that received or will receive payout for this period
+        payoutTransactionHash:
+          type: string
+          nullable: true
+          description: Transaction hash of the payout
+          pattern: "^0x[a-fA-F0-9]{64}$"
+        startTime:
+          $ref: "#/components/schemas/Timestamp"
+          nullable: true
+        endTime:
+          $ref: "#/components/schemas/Timestamp"
+          nullable: true
+
+    Dashboard:
+      type: object
+      required: [groups, invites, rounds]
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupSummary"
+          description: Groups the user belongs to
+        invites:
+          type: array
+          items:
+            $ref: "#/components/schemas/PendingInvite"
+          description: Pending invites received by the user
+        rounds:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoundSummary"
+          description: Active rounds requiring action
+        upcomingPayouts:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpcomingPayout"
+          description: Upcoming payouts the user is eligible for
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+          description: Recent activity across all accessible rounds
+
+    PendingInvite:
+      type: object
+      required: [id, groupId, groupName, createdAt]
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        groupId:
+          $ref: "#/components/schemas/UUID"
+        groupName:
+          type: string
+        groupAvatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+
+    UpcomingPayout:
+      type: object
+      required: [roundId, groupId, groupName, period, expectedAmount]
+      properties:
+        roundId:
+          $ref: "#/components/schemas/UUID"
+        groupId:
+          $ref: "#/components/schemas/UUID"
+        groupName:
+          type: string
+        period:
+          type: integer
+          minimum: 0
+        expectedAmount:
+          type: string
+          description: Expected payout amount in smallest units
+          pattern: "^[0-9]+$"
+        estimatedTime:
+          $ref: "#/components/schemas/Timestamp"
+          nullable: true
+
+    ErrorInternalServerError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 500
+        message:
+          type: string
+          example: Internal server error
