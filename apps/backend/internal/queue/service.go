@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 )
 
@@ -31,7 +32,7 @@ func (s *Service) Enqueue(ctx context.Context, jobType string, payload JobPayloa
 		return nil, err
 	}
 
-	retries := 3
+	retries := 1
 	if maxRetries != nil {
 		retries = *maxRetries
 	}
@@ -40,7 +41,7 @@ func (s *Service) Enqueue(ctx context.Context, jobType string, payload JobPayloa
 		Type:        jobType,
 		Payload:     payloadJSON,
 		MaxRetries:  int32(retries),
-		ScheduledAt: time.Now(),
+		ScheduledAt: pgtype.Timestamptz{Time: time.Now(), Valid: true},
 	}
 
 	job, err := s.store.CreateJob(ctx, params)
@@ -69,9 +70,10 @@ func (s *Service) GetNextPendingJob(ctx context.Context) (*sqlc.Job, error) {
 }
 
 func (s *Service) MarkJobCompleted(ctx context.Context, jobID uuid.UUID) error {
+	var errorMsg *string = nil
 	_, err := s.store.UpdateJobStatus(ctx, sqlc.UpdateJobStatusParams{
 		Status:       "completed",
-		ErrorMessage: nil,
+		ErrorMessage: errorMsg,
 		ID:           jobID,
 	})
 	return err
@@ -93,4 +95,3 @@ func (s *Service) RetryJob(ctx context.Context, jobID uuid.UUID, errorMsg string
 	})
 	return err
 }
-

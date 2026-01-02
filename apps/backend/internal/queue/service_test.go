@@ -2,8 +2,8 @@ package queue_test
 
 import (
 	dbmocks "circa/internal/db/mocks"
-	"circa/internal/queue"
 	sqlc "circa/internal/db/sqlc/generated"
+	"circa/internal/queue"
 	"context"
 	"encoding/json"
 	"errors"
@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -37,14 +38,14 @@ func TestService_Enqueue(t *testing.T) {
 			setupMocks: func(ms *dbmocks.MockStore) {
 				ms.On("CreateJob", mock.Anything, mock.MatchedBy(func(params sqlc.CreateJobParams) bool {
 					return params.Type == "test_job" &&
-						params.MaxRetries == 3 &&
+						params.MaxRetries == 1 &&
 						len(params.Payload) > 0
 				})).Return(createTestJob(), nil)
 			},
 			expectedError: nil,
 			validateJob: func(t *testing.T, job *sqlc.Job) {
 				assert.Equal(t, "test_job", job.Type)
-				assert.Equal(t, int32(3), job.MaxRetries)
+				assert.Equal(t, int32(1), job.MaxRetries)
 			},
 		},
 		{
@@ -197,8 +198,17 @@ func TestService_MarkJobCompleted(t *testing.T) {
 			jobID: uuid.New(),
 			setupMocks: func(ms *dbmocks.MockStore) {
 				ms.On("UpdateJobStatus", mock.Anything, mock.MatchedBy(func(params sqlc.UpdateJobStatusParams) bool {
-					return params.Status == "completed" &&
-						params.ErrorMessage == nil
+					if params.Status != "completed" {
+						return false
+					}
+					// ErrorMessage can be nil or a typed nil pointer (*string)(nil)
+					// When a typed nil pointer is assigned to interface{}, it's not == nil
+					// We need to check if it's nil or if it's a nil pointer
+					if params.ErrorMessage == nil {
+						return true
+					}
+					errorMsg, ok := params.ErrorMessage.(*string)
+					return ok && errorMsg == nil
 				})).Return(createTestJob(), nil)
 			},
 			expectedError: nil,
@@ -249,9 +259,14 @@ func TestService_MarkJobFailed(t *testing.T) {
 			errorMsg: "test error",
 			setupMocks: func(ms *dbmocks.MockStore) {
 				ms.On("UpdateJobStatus", mock.Anything, mock.MatchedBy(func(params sqlc.UpdateJobStatusParams) bool {
-					return params.Status == "failed" &&
-						params.ErrorMessage != nil &&
-						*params.ErrorMessage == "test error"
+					if params.Status != "failed" {
+						return false
+					}
+					if params.ErrorMessage == nil {
+						return false
+					}
+					errorMsg, ok := params.ErrorMessage.(*string)
+					return ok && errorMsg != nil && *errorMsg == "test error"
 				})).Return(createTestJob(), nil)
 			},
 			expectedError: nil,
@@ -355,10 +370,10 @@ func createTestJob() sqlc.Job {
 		Payload:     payload,
 		Status:      "pending",
 		RetryCount:  0,
-		MaxRetries:  3,
-		ScheduledAt: now,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		MaxRetries:  1,
+		ScheduledAt: pgtype.Timestamptz{Time: now, Valid: true},
+		CreatedAt:   pgtype.Timestamptz{Time: now, Valid: true},
+		UpdatedAt:   pgtype.Timestamptz{Time: now, Valid: true},
 	}
 }
 
@@ -372,4 +387,3 @@ func createTestJobWithID(id uuid.UUID) sqlc.Job {
 	job.ID = id
 	return job
 }
-

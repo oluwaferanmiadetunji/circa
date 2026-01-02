@@ -18,9 +18,7 @@ type ResendEmailsService interface {
 }
 
 type Service struct {
-	client    ResendClient
-	fromEmail string
-	fromName  string
+	client ResendClient
 }
 
 func (s *Service) SetClient(client ResendClient) {
@@ -31,12 +29,10 @@ func (s *Service) Client() ResendClient {
 	return s.client
 }
 
-func NewService(apiKey, fromEmail, fromName string) *Service {
+func NewService(apiKey string) *Service {
 	client := resend.NewClient(apiKey)
 	return &Service{
-		client:    &resendClientWrapper{client: client},
-		fromEmail: fromEmail,
-		fromName:  fromName,
+		client: &resendClientWrapper{client: client},
 	}
 }
 
@@ -100,7 +96,7 @@ If you didn't create an account, you can safely ignore this email.
 	`, toName, magicLinkURL)
 
 	params := &resend.SendEmailRequest{
-		From:    fmt.Sprintf("%s <%s>", s.fromName, s.fromEmail),
+		From:    "Circa <onboarding@resend.dev>",
 		To:      []string{toEmail},
 		Subject: subject,
 		Html:    htmlBody,
@@ -120,4 +116,3 @@ If you didn't create an account, you can safely ignore this email.
 
 	return nil
 }
-

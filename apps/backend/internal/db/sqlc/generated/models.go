@@ -5,25 +5,23 @@
 package sqlc
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Job struct {
-	ID           uuid.UUID        `json:"id"`
-	Type         string           `json:"type"`
-	Payload      []byte           `json:"payload"`
-	Status       string           `json:"status"`
-	RetryCount   int32            `json:"retry_count"`
-	MaxRetries   int32            `json:"max_retries"`
-	ErrorMessage *string          `json:"error_message"`
-	ScheduledAt  time.Time        `json:"scheduled_at"`
-	ProcessedAt  time.Time        `json:"processed_at"`
-	CreatedAt    time.Time        `json:"created_at"`
-	UpdatedAt    time.Time        `json:"updated_at"`
-	DeletedAt    pgtype.Timestamp `json:"deleted_at"`
+	ID           uuid.UUID          `json:"id"`
+	Type         string             `json:"type"`
+	Payload      []byte             `json:"payload"`
+	Status       string             `json:"status"`
+	RetryCount   int32              `json:"retry_count"`
+	MaxRetries   int32              `json:"max_retries"`
+	ErrorMessage *string            `json:"error_message"`
+	ScheduledAt  pgtype.Timestamptz `json:"scheduled_at"`
+	ProcessedAt  pgtype.Timestamp   `json:"processed_at"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt    pgtype.Timestamp   `json:"deleted_at"`
 }
 
 type MagicLink struct {
@@ -31,8 +29,8 @@ type MagicLink struct {
 	PendingSignupID uuid.UUID        `json:"pending_signup_id"`
 	TokenHash       string           `json:"token_hash"`
 	ExpiresAt       pgtype.Timestamp `json:"expires_at"`
-	CreatedAt       time.Time        `json:"created_at"`
-	UpdatedAt       time.Time        `json:"updated_at"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	UpdatedAt       pgtype.Timestamp `json:"updated_at"`
 	DeletedAt       pgtype.Timestamp `json:"deleted_at"`
 }
 
@@ -44,8 +42,8 @@ type PendingSignup struct {
 	EmailVerifiedAt pgtype.Timestamp `json:"email_verified_at"`
 	Status          string           `json:"status"`
 	ExpiresAt       pgtype.Timestamp `json:"expires_at"`
-	CreatedAt       time.Time        `json:"created_at"`
-	UpdatedAt       time.Time        `json:"updated_at"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	UpdatedAt       pgtype.Timestamp `json:"updated_at"`
 	DeletedAt       pgtype.Timestamp `json:"deleted_at"`
 }
 
@@ -56,7 +54,7 @@ type User struct {
 	Address     string           `json:"address"`
 	DisplayName *string          `json:"display_name"`
 	AvatarUrl   *string          `json:"avatar_url"`
-	CreatedAt   time.Time        `json:"created_at"`
-	UpdatedAt   time.Time        `json:"updated_at"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
 	DeletedAt   pgtype.Timestamp `json:"deleted_at"`
 }

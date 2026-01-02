@@ -8,11 +8,11 @@ import (
 )
 
 type Handler struct {
-	authService *auth.Service
+	authService auth.AuthService
 }
 
 // NewHandler creates a new handler instance
-func NewHandler(authService *auth.Service) *Handler {
+func NewHandler(authService auth.AuthService) *Handler {
 	return &Handler{
 		authService: authService,
 	}

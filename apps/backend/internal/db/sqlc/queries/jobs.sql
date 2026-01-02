@@ -13,13 +13,19 @@ LIMIT 1
 FOR UPDATE SKIP LOCKED;
 
 -- name: UpdateJobStatus :one
-UPDATE jobs 
-SET status = $1, 
-    processed_at = CASE WHEN $1 = 'completed' OR $1 = 'failed' THEN NOW() ELSE processed_at END,
-    error_message = $2,
+UPDATE jobs j
+SET 
+    status = v.status_val,
+    processed_at = CASE 
+        WHEN v.status_val IN ('completed', 'failed')
+        THEN NOW()
+        ELSE j.processed_at
+    END,
+    error_message = v.error_msg,
     updated_at = NOW()
-WHERE id = $3 AND deleted_at IS NULL
-RETURNING *;
+FROM (VALUES (sqlc.arg(status)::varchar, sqlc.arg(error_message), sqlc.arg(id)::uuid)) AS v(status_val, error_msg, job_id)
+WHERE j.id = v.job_id AND j.deleted_at IS NULL
+RETURNING j.*;
 
 -- name: IncrementJobRetry :one
 UPDATE jobs 

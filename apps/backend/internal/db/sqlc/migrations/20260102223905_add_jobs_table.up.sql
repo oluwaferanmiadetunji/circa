@@ -7,10 +7,10 @@ CREATE TABLE
         "retry_count" INTEGER NOT NULL DEFAULT 0,
         "max_retries" INTEGER NOT NULL DEFAULT 3,
         "error_message" TEXT,
-        "scheduled_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        "scheduled_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "processed_at" TIMESTAMPTZ,
-        "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "deleted_at" TIMESTAMP
     );
 

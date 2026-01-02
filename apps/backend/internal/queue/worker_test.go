@@ -2,9 +2,9 @@ package queue_test
 
 import (
 	dbmocks "circa/internal/db/mocks"
+	sqlc "circa/internal/db/sqlc/generated"
 	"circa/internal/queue"
 	"circa/internal/queue/mocks"
-	sqlc "circa/internal/db/sqlc/generated"
 	"context"
 	"encoding/json"
 	"errors"
@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -37,8 +38,8 @@ func TestWorker_ProcessJobs(t *testing.T) {
 			name: "success - process send_magic_link_email job",
 			setupMocks: func(ms *dbmocks.MockStore, es *mocks.MockEmailService) {
 				job := createTestJobWithType("send_magic_link_email", map[string]interface{}{
-					"email":         "test@example.com",
-					"name":          "Test User",
+					"email":          "test@example.com",
+					"name":           "Test User",
 					"magic_link_url": "https://example.com/verify?token=abc123",
 				})
 				ms.On("GetNextPendingJob", mock.Anything).Return(job, nil).Once()
@@ -59,9 +60,14 @@ func TestWorker_ProcessJobs(t *testing.T) {
 				job := createTestJobWithType("unknown_job", map[string]interface{}{})
 				ms.On("GetNextPendingJob", mock.Anything).Return(job, nil).Once()
 				ms.On("UpdateJobStatus", mock.Anything, mock.MatchedBy(func(params sqlc.UpdateJobStatusParams) bool {
-					return params.Status == "failed" &&
-						params.ErrorMessage != nil &&
-						*params.ErrorMessage == "Unknown job type"
+					if params.Status != "failed" {
+						return false
+					}
+					if params.ErrorMessage == nil {
+						return false
+					}
+					errorMsg, ok := params.ErrorMessage.(*string)
+					return ok && errorMsg != nil && *errorMsg == "Unknown job type"
 				})).Return(job, nil).Once()
 			},
 			expectedCalls: func(t *testing.T, ms *dbmocks.MockStore, es *mocks.MockEmailService) {
@@ -75,9 +81,14 @@ func TestWorker_ProcessJobs(t *testing.T) {
 				job.Payload = []byte("invalid json")
 				ms.On("GetNextPendingJob", mock.Anything).Return(job, nil).Once()
 				ms.On("UpdateJobStatus", mock.Anything, mock.MatchedBy(func(params sqlc.UpdateJobStatusParams) bool {
-					return params.Status == "failed" &&
-						params.ErrorMessage != nil &&
-						*params.ErrorMessage == "Invalid payload format"
+					if params.Status != "failed" {
+						return false
+					}
+					if params.ErrorMessage == nil {
+						return false
+					}
+					errorMsg, ok := params.ErrorMessage.(*string)
+					return ok && errorMsg != nil && *errorMsg == "Invalid payload format"
 				})).Return(job, nil).Once()
 			},
 			expectedCalls: func(t *testing.T, ms *dbmocks.MockStore, es *mocks.MockEmailService) {
@@ -88,15 +99,20 @@ func TestWorker_ProcessJobs(t *testing.T) {
 			name: "error - email service nil",
 			setupMocks: func(ms *dbmocks.MockStore, es *mocks.MockEmailService) {
 				job := createTestJobWithType("send_magic_link_email", map[string]interface{}{
-					"email":         "test@example.com",
-					"name":          "Test User",
+					"email":          "test@example.com",
+					"name":           "Test User",
 					"magic_link_url": "https://example.com/verify?token=abc123",
 				})
 				ms.On("GetNextPendingJob", mock.Anything).Return(job, nil).Once()
 				ms.On("UpdateJobStatus", mock.Anything, mock.MatchedBy(func(params sqlc.UpdateJobStatusParams) bool {
-					return params.Status == "failed" &&
-						params.ErrorMessage != nil &&
-						*params.ErrorMessage == "Email service not configured"
+					if params.Status != "failed" {
+						return false
+					}
+					if params.ErrorMessage == nil {
+						return false
+					}
+					errorMsg, ok := params.ErrorMessage.(*string)
+					return ok && errorMsg != nil && *errorMsg == "Email service not configured"
 				})).Return(job, nil).Once()
 			},
 			expectedCalls: func(t *testing.T, ms *dbmocks.MockStore, es *mocks.MockEmailService) {
@@ -108,8 +124,8 @@ func TestWorker_ProcessJobs(t *testing.T) {
 			name: "error - email send fails, retry available",
 			setupMocks: func(ms *dbmocks.MockStore, es *mocks.MockEmailService) {
 				job := createTestJobWithType("send_magic_link_email", map[string]interface{}{
-					"email":         "test@example.com",
-					"name":          "Test User",
+					"email":          "test@example.com",
+					"name":           "Test User",
 					"magic_link_url": "https://example.com/verify?token=abc123",
 				})
 				job.RetryCount = 0
@@ -131,8 +147,8 @@ func TestWorker_ProcessJobs(t *testing.T) {
 			name: "error - email send fails, max retries exceeded",
 			setupMocks: func(ms *dbmocks.MockStore, es *mocks.MockEmailService) {
 				job := createTestJobWithType("send_magic_link_email", map[string]interface{}{
-					"email":         "test@example.com",
-					"name":          "Test User",
+					"email":          "test@example.com",
+					"name":           "Test User",
 					"magic_link_url": "https://example.com/verify?token=abc123",
 				})
 				job.RetryCount = 3
@@ -141,9 +157,14 @@ func TestWorker_ProcessJobs(t *testing.T) {
 				es.On("SendMagicLink", mock.Anything, "test@example.com", "Test User", "https://example.com/verify?token=abc123").
 					Return(errors.New("email service error")).Once()
 				ms.On("UpdateJobStatus", mock.Anything, mock.MatchedBy(func(params sqlc.UpdateJobStatusParams) bool {
-					return params.Status == "failed" &&
-						params.ErrorMessage != nil &&
-						*params.ErrorMessage == "email service error"
+					if params.Status != "failed" {
+						return false
+					}
+					if params.ErrorMessage == nil {
+						return false
+					}
+					errorMsg, ok := params.ErrorMessage.(*string)
+					return ok && errorMsg != nil && *errorMsg == "email service error"
 				})).Return(job, nil).Once()
 			},
 			expectedCalls: func(t *testing.T, ms *dbmocks.MockStore, es *mocks.MockEmailService) {
@@ -155,8 +176,8 @@ func TestWorker_ProcessJobs(t *testing.T) {
 			name: "error - mark completed fails",
 			setupMocks: func(ms *dbmocks.MockStore, es *mocks.MockEmailService) {
 				job := createTestJobWithType("send_magic_link_email", map[string]interface{}{
-					"email":         "test@example.com",
-					"name":          "Test User",
+					"email":          "test@example.com",
+					"name":           "Test User",
 					"magic_link_url": "https://example.com/verify?token=abc123",
 				})
 				ms.On("GetNextPendingJob", mock.Anything).Return(job, nil).Once()
@@ -174,8 +195,8 @@ func TestWorker_ProcessJobs(t *testing.T) {
 			name: "error - retry job fails",
 			setupMocks: func(ms *dbmocks.MockStore, es *mocks.MockEmailService) {
 				job := createTestJobWithType("send_magic_link_email", map[string]interface{}{
-					"email":         "test@example.com",
-					"name":          "Test User",
+					"email":          "test@example.com",
+					"name":           "Test User",
 					"magic_link_url": "https://example.com/verify?token=abc123",
 				})
 				job.RetryCount = 1
@@ -280,10 +301,9 @@ func createTestJobWithType(jobType string, payload map[string]interface{}) sqlc.
 		Payload:     payloadJSON,
 		Status:      "pending",
 		RetryCount:  0,
-		MaxRetries:  3,
-		ScheduledAt: now,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		MaxRetries:  1,
+		ScheduledAt: pgtype.Timestamptz{Time: now, Valid: true},
+		CreatedAt:   pgtype.Timestamptz{Time: now, Valid: true},
+		UpdatedAt:   pgtype.Timestamptz{Time: now, Valid: true},
 	}
 }
-

@@ -17,6 +17,10 @@ tags:
   - name: rounds
     description: Ajo rounds (on-chain mapped) and activity feeds
 
+servers:
+  - url: http://localhost:8081
+    description: Main API server
+    
 security:
   - SessionAuth: []
 

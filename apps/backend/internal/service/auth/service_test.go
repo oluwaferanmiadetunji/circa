@@ -82,7 +82,7 @@ func TestService_CreatePendingSignup(t *testing.T) {
 				ms.On("GetUserByEmail", mock.Anything, mock.Anything).
 					Return(sqlc.User{}, pgx.ErrNoRows)
 			},
-			usePGXStore:    false, // Use MockStore directly to trigger invalid store error
+			usePGXStore:    false,
 			expectedError:  circaerrors.ErrInvalidStore,
 			expectedResult: nil,
 		},
@@ -102,7 +102,7 @@ func TestService_CreatePendingSignup(t *testing.T) {
 				store = mockStore
 			}
 
-			service := NewService(store, nil, "", 15*time.Minute)
+			service := NewService(store, nil, "https://example.com", 15*time.Minute)
 
 			result, err := service.CreatePendingSignup(context.Background(), tt.fullName, tt.email, tt.displayName)
 			if tt.expectedError != nil {
@@ -140,8 +140,8 @@ func createTestUser() sqlc.User {
 		Email:       pgtype.Text{String: "test@example.com", Valid: true},
 		Address:     "0x1234567890123456789012345678901234567890",
 		DisplayName: stringPtr("testuser"),
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		CreatedAt:   pgtype.Timestamp{Time: time.Now(), Valid: true},
+		UpdatedAt:   pgtype.Timestamp{Time: time.Now(), Valid: true},
 	}
 }
 
@@ -155,8 +155,8 @@ func createTestPendingSignup() sqlc.PendingSignup {
 		DisplayName: stringPtr("johndoe"),
 		Status:      "pending",
 		ExpiresAt:   pgtype.Timestamp{Time: expiresAt, Valid: true},
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		CreatedAt:   pgtype.Timestamp{Time: now, Valid: true},
+		UpdatedAt:   pgtype.Timestamp{Time: now, Valid: true},
 	}
 }
 
@@ -168,7 +168,7 @@ func createTestMagicLink() sqlc.MagicLink {
 		PendingSignupID: uuid.New(),
 		TokenHash:       "test_token_hash",
 		ExpiresAt:       pgtype.Timestamp{Time: expiresAt, Valid: true},
-		CreatedAt:       now,
-		UpdatedAt:       now,
+		CreatedAt:       pgtype.Timestamp{Time: now, Valid: true},
+		UpdatedAt:       pgtype.Timestamp{Time: now, Valid: true},
 	}
 }

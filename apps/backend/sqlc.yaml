@@ -20,14 +20,14 @@ sql:
           - db_type: "timestamptz"
             nullable: true
             go_type:
-              import: "time"
-              type: "Time"
+              import: "github.com/jackc/pgx/v5/pgtype"
+              type: "Timestamp"
 
           - db_type: "timestamp"
             nullable: true
             go_type:
-              import: "time"
-              type: "Time"
+              import: "github.com/jackc/pgx/v5/pgtype"
+              type: "Timestamp"
 
           - db_type: "varchar"
             nullable: true
@@ -43,3 +43,8 @@ sql:
             nullable: true
             go_type:
               type: "*bool"
+
+          - column: "jobs.processed_at"
+            go_type:
+              import: "github.com/jackc/pgx/v5/pgtype"
+              type: "Timestamp"

@@ -7,9 +7,9 @@ package sqlc
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createJob = `-- name: CreateJob :one
@@ -19,10 +19,10 @@ RETURNING id, type, payload, status, retry_count, max_retries, error_message, sc
 `
 
 type CreateJobParams struct {
-	Type        string    `json:"type"`
-	Payload     []byte    `json:"payload"`
-	MaxRetries  int32     `json:"max_retries"`
-	ScheduledAt time.Time `json:"scheduled_at"`
+	Type        string             `json:"type"`
+	Payload     []byte             `json:"payload"`
+	MaxRetries  int32              `json:"max_retries"`
+	ScheduledAt pgtype.Timestamptz `json:"scheduled_at"`
 }
 
 func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (Job, error) {
@@ -144,19 +144,25 @@ func (q *Queries) IncrementJobRetry(ctx context.Context, arg IncrementJobRetryPa
 }
 
 const updateJobStatus = `-- name: UpdateJobStatus :one
-UPDATE jobs 
-SET status = $1, 
-    processed_at = CASE WHEN $1 = 'completed' OR $1 = 'failed' THEN NOW() ELSE processed_at END,
-    error_message = $2,
+UPDATE jobs j
+SET 
+    status = v.status_val,
+    processed_at = CASE 
+        WHEN v.status_val IN ('completed', 'failed')
+        THEN NOW()
+        ELSE j.processed_at
+    END,
+    error_message = v.error_msg,
     updated_at = NOW()
-WHERE id = $3 AND deleted_at IS NULL
-RETURNING id, type, payload, status, retry_count, max_retries, error_message, scheduled_at, processed_at, created_at, updated_at, deleted_at
+FROM (VALUES ($1::varchar, $2, $3::uuid)) AS v(status_val, error_msg, job_id)
+WHERE j.id = v.job_id AND j.deleted_at IS NULL
+RETURNING j.id, j.type, j.payload, j.status, j.retry_count, j.max_retries, j.error_message, j.scheduled_at, j.processed_at, j.created_at, j.updated_at, j.deleted_at
 `
 
 type UpdateJobStatusParams struct {
-	Status       string    `json:"status"`
-	ErrorMessage *string   `json:"error_message"`
-	ID           uuid.UUID `json:"id"`
+	Status       string      `json:"status"`
+	ErrorMessage interface{} `json:"error_message"`
+	ID           uuid.UUID   `json:"id"`
 }
 
 func (q *Queries) UpdateJobStatus(ctx context.Context, arg UpdateJobStatusParams) (Job, error) {

@@ -4,10 +4,10 @@ import (
 	"circa/api"
 	"circa/internal/config"
 	"circa/internal/db"
-	"circa/internal/handler"
-	"circa/internal/service/auth"
 	"circa/internal/email"
+	"circa/internal/handler"
 	"circa/internal/queue"
+	"circa/internal/service/auth"
 	"context"
 	"net/http"
 	"os"
@@ -17,13 +17,11 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 )
 
 func main() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	log.Info().Msg("Starting Circa backend server...")
 
@@ -39,9 +37,9 @@ func main() {
 	}
 
 	queueService := queue.NewService(store)
-	emailService := email.NewService(cfg.ResendAPIKey, cfg.EmailFrom, cfg.EmailFromName)
+	emailService := email.NewService(cfg.ResendAPIKey)
 	queueWorker := queue.NewWorker(queueService, emailService)
-	
+
 	authService := auth.NewService(store, queueService, cfg.FrontendURL, 15*time.Minute)
 
 	// Initialize handlers
@@ -52,12 +50,12 @@ func main() {
 	e.HideBanner = true
 
 	// Middleware
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{cfg.FrontendURL},
-		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete, http.MethodOptions},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderCookie},
+		AllowOrigins:     []string{cfg.FrontendURL},
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete, http.MethodOptions},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderCookie},
 		AllowCredentials: true,
 	}))
 
@@ -105,7 +103,7 @@ func main() {
 	g.Go(func() error {
 		<-ctx.Done()
 		log.Info().Msg("Shutting down server...")
-		
+
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer shutdownCancel()
 

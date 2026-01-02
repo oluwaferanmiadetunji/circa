@@ -32,28 +32,22 @@ func (m *mockEmailsService) SendWithContext(ctx context.Context, params *resend.
 
 func TestNewService(t *testing.T) {
 	tests := []struct {
-		name      string
-		apiKey    string
-		fromEmail string
-		fromName  string
+		name   string
+		apiKey string
 	}{
 		{
-			name:      "success - creates service with all fields",
-			apiKey:    "test-api-key",
-			fromEmail: "test@example.com",
-			fromName:  "Test Name",
+			name:   "success - creates service with all fields",
+			apiKey: "test-api-key",
 		},
 		{
-			name:      "success - empty api key",
-			apiKey:    "",
-			fromEmail: "test@example.com",
-			fromName:  "Test Name",
+			name:   "success - empty api key",
+			apiKey: "",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service := email.NewService(tt.apiKey, tt.fromEmail, tt.fromName)
+			service := email.NewService(tt.apiKey)
 			require.NotNil(t, service)
 		})
 	}
@@ -189,7 +183,7 @@ func TestService_SendMagicLink(t *testing.T) {
 				},
 			}
 
-			service := email.NewService("test-api-key", tt.fromEmail, tt.fromName)
+			service := email.NewService("test-api-key")
 			originalClient := service.Client()
 			service.SetClient(mockClient)
 
@@ -211,8 +205,8 @@ func TestService_SendMagicLink(t *testing.T) {
 }
 
 func TestService_SendMagicLink_EmailContent(t *testing.T) {
-	service := email.NewService("test-api-key", "noreply@circa.com", "Circa")
-	
+	service := email.NewService("test-api-key")
+
 	var capturedParams *resend.SendEmailRequest
 	mockClient := &mockResendClient{
 		sendFunc: func(ctx context.Context, params *resend.SendEmailRequest) (*resend.SendEmailResponse, error) {

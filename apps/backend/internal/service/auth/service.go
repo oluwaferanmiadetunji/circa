@@ -148,14 +148,20 @@ func (s *Service) CreatePendingSignup(ctx context.Context, fullName, email strin
 		if displayName != nil && *displayName != "" {
 			recipientName = *displayName
 		}
-		_, err := s.queueService.Enqueue(ctx, "send_magic_link_email", queue.JobPayload{
-			"email":          email,
-			"name":           recipientName,
-			"magic_link_url": magicLinkURL,
-		}, nil)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to enqueue magic link email")
-		}
+
+		go func() {
+			// Use background context for async job enqueueing to avoid cancellation
+			// when the HTTP request completes
+			bgCtx := context.Background()
+			_, err := s.queueService.Enqueue(bgCtx, "send_magic_link_email", queue.JobPayload{
+				"email":          email,
+				"name":           recipientName,
+				"magic_link_url": magicLinkURL,
+			}, nil)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to enqueue magic link email")
+			}
+		}()
 	}
 
 	return &SignupResult{
