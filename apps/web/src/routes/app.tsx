@@ -1,6 +1,6 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
-import App from '@/lib/pages/app'
+import { AppLayout } from '@/lib/layout/app-layout'
 import { api_url } from '@/lib/constants'
 
 export const Route = createFileRoute('/app')({
@@ -22,5 +22,9 @@ export const Route = createFileRoute('/app')({
       throw redirect({ to: '/auth/signup' })
     }
   },
-  component: App,
+  component: () => (
+    <AppLayout>
+      <Outlet />
+    </AppLayout>
+  ),
 })

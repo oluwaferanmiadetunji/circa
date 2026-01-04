@@ -65,7 +65,6 @@ func (h *Handler) AuthSignup(ctx echo.Context) error {
 	return ctx.JSON(200, response)
 }
 
-// AuthLogin handles POST /auth/login
 func (h *Handler) AuthLogin(ctx echo.Context) error {
 	var req api.AuthLoginJSONRequestBody
 	if err := ctx.Bind(&req); err != nil {
@@ -99,7 +98,6 @@ func (h *Handler) AuthLogin(ctx echo.Context) error {
 	return ctx.JSON(200, response)
 }
 
-// AuthNonce handles POST /auth/nonce
 func (h *Handler) AuthNonce(ctx echo.Context) error {
 	var req api.AuthNonceJSONRequestBody
 	if err := ctx.Bind(&req); err != nil {

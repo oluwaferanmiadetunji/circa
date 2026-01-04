@@ -11,10 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AuthVerifyRouteImport } from './routes/auth.verify'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
 import { Route as AuthSigninRouteImport } from './routes/auth.signin'
 import { Route as AuthConnect_walletRouteImport } from './routes/auth.connect_wallet'
+import { Route as AppCreate_circleRouteImport } from './routes/app.create_circle'
 
 const AppRoute = AppRouteImport.update({
   id: '/app',
@@ -25,6 +27,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
 } as any)
 const AuthVerifyRoute = AuthVerifyRouteImport.update({
   id: '/auth/verify',
@@ -46,62 +53,77 @@ const AuthConnect_walletRoute = AuthConnect_walletRouteImport.update({
   path: '/auth/connect_wallet',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppCreate_circleRoute = AppCreate_circleRouteImport.update({
+  id: '/create_circle',
+  path: '/create_circle',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/create_circle': typeof AppCreate_circleRoute
   '/auth/connect_wallet': typeof AuthConnect_walletRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify': typeof AuthVerifyRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
+  '/app/create_circle': typeof AppCreate_circleRoute
   '/auth/connect_wallet': typeof AuthConnect_walletRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify': typeof AuthVerifyRoute
+  '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/create_circle': typeof AppCreate_circleRoute
   '/auth/connect_wallet': typeof AuthConnect_walletRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify': typeof AuthVerifyRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/app'
+    | '/app/create_circle'
     | '/auth/connect_wallet'
     | '/auth/signin'
     | '/auth/signup'
     | '/auth/verify'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/app'
+    | '/app/create_circle'
     | '/auth/connect_wallet'
     | '/auth/signin'
     | '/auth/signup'
     | '/auth/verify'
+    | '/app'
   id:
     | '__root__'
     | '/'
     | '/app'
+    | '/app/create_circle'
     | '/auth/connect_wallet'
     | '/auth/signin'
     | '/auth/signup'
     | '/auth/verify'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRoute
+  AppRoute: typeof AppRouteWithChildren
   AuthConnect_walletRoute: typeof AuthConnect_walletRoute
   AuthSigninRoute: typeof AuthSigninRoute
   AuthSignupRoute: typeof AuthSignupRoute
@@ -123,6 +145,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
     }
     '/auth/verify': {
       id: '/auth/verify'
@@ -152,12 +181,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthConnect_walletRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/create_circle': {
+      id: '/app/create_circle'
+      path: '/create_circle'
+      fullPath: '/app/create_circle'
+      preLoaderRoute: typeof AppCreate_circleRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppCreate_circleRoute: typeof AppCreate_circleRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppCreate_circleRoute: AppCreate_circleRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppRoute: AppRoute,
+  AppRoute: AppRouteWithChildren,
   AuthConnect_walletRoute: AuthConnect_walletRoute,
   AuthSigninRoute: AuthSigninRoute,
   AuthSignupRoute: AuthSignupRoute,

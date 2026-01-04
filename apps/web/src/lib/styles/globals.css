@@ -239,4 +239,22 @@ code {
   background-clip: text;
 }
 
+/* Custom Switch/Toggle */
+.toggle-checkbox:checked {
+  right: 0;
+  border-color: #667eea;
+}
+
+.dark .toggle-checkbox:checked {
+  border-color: #c4b5fd;
+}
+
+.toggle-checkbox:checked + .toggle-label {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.dark .toggle-checkbox:checked + .toggle-label {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
 

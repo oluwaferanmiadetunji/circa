@@ -4,6 +4,8 @@ import { Toaster } from 'react-hot-toast'
 import { ThemeProvider } from '@/lib/components/theme-provider'
 import { ThemeToggle } from '@/lib/components/theme-toggle'
 
+export { AppLayout } from './app-layout'
+
 type LayoutProps = {
   children: ReactNode
 }
@@ -22,7 +24,7 @@ export const Layout = ({ children }: LayoutProps) => {
           {children}
         </main>
 
-        <div className="fixed bottom-6 left-6 z-50">
+        <div className="fixed top-6 right-6 z-50">
           <div className="bg-white dark:bg-[#241f2e] border border-[#eeeeee] dark:border-[#3d3551] rounded-full h-12 w-12 flex items-center justify-center p-2 shadow-lg hover:shadow-xl transition-shadow">
             <ThemeToggle />
           </div>
