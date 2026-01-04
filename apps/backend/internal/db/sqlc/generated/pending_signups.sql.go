@@ -13,8 +13,8 @@ import (
 )
 
 const createPendingSignup = `-- name: CreatePendingSignup :one
-INSERT INTO pending_signups (full_name, email, display_name)
-VALUES ($1, $2, $3)
+INSERT INTO pending_signups (full_name, email, display_name, expires_at)
+VALUES ($1, $2, $3, NOW() + INTERVAL '24 hours')
 RETURNING id, full_name, email, display_name, email_verified_at, status, expires_at, created_at, updated_at, deleted_at
 `
 
@@ -84,6 +84,37 @@ func (q *Queries) GetPendingSignupByID(ctx context.Context, id uuid.UUID) (Pendi
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const getVerifiedPendingSignupByID = `-- name: GetVerifiedPendingSignupByID :one
+SELECT id, full_name, email, display_name, email_verified_at, status, expires_at, created_at, updated_at, deleted_at FROM pending_signups WHERE id = $1 AND deleted_at IS NULL AND status = 'pending' AND email_verified_at IS NOT NULL AND expires_at > NOW()
+`
+
+func (q *Queries) GetVerifiedPendingSignupByID(ctx context.Context, id uuid.UUID) (PendingSignup, error) {
+	row := q.db.QueryRow(ctx, getVerifiedPendingSignupByID, id)
+	var i PendingSignup
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Email,
+		&i.DisplayName,
+		&i.EmailVerifiedAt,
+		&i.Status,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const invalidatePendingSignupsByEmail = `-- name: InvalidatePendingSignupsByEmail :exec
+UPDATE pending_signups SET deleted_at = NOW() WHERE email = $1 AND deleted_at IS NULL AND status = 'pending' AND email_verified_at IS NULL
+`
+
+func (q *Queries) InvalidatePendingSignupsByEmail(ctx context.Context, email pgtype.Text) error {
+	_, err := q.db.Exec(ctx, invalidatePendingSignupsByEmail, email)
+	return err
 }
 
 const updatePendingSignup = `-- name: UpdatePendingSignup :one

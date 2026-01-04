@@ -8,8 +8,65 @@ package sqlc
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (full_name, email, address, display_name)
+VALUES ($1, $2, $3, $4)
+RETURNING id, full_name, email, address, display_name, avatar_url, created_at, updated_at, deleted_at
+`
+
+type CreateUserParams struct {
+	FullName    pgtype.Text `json:"full_name"`
+	Email       pgtype.Text `json:"email"`
+	Address     string      `json:"address"`
+	DisplayName *string     `json:"display_name"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, createUser,
+		arg.FullName,
+		arg.Email,
+		arg.Address,
+		arg.DisplayName,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Email,
+		&i.Address,
+		&i.DisplayName,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getUserByAddress = `-- name: GetUserByAddress :one
+SELECT id, full_name, email, address, display_name, avatar_url, created_at, updated_at, deleted_at FROM users WHERE address = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) GetUserByAddress(ctx context.Context, address string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByAddress, address)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Email,
+		&i.Address,
+		&i.DisplayName,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
 
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, full_name, email, address, display_name, avatar_url, created_at, updated_at, deleted_at FROM users WHERE email = $1 AND deleted_at IS NULL
@@ -17,6 +74,27 @@ SELECT id, full_name, email, address, display_name, avatar_url, created_at, upda
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email pgtype.Text) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Email,
+		&i.Address,
+		&i.DisplayName,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, full_name, email, address, display_name, avatar_url, created_at, updated_at, deleted_at FROM users WHERE id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByID, id)
 	var i User
 	err := row.Scan(
 		&i.ID,

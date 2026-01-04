@@ -54,25 +54,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorBadRequest"
 
-  /auth/nonce:
+  /auth/login:
     post:
       tags: [auth]
-      summary: Request a nonce for wallet sign-in
-      operationId: authNonce
+      summary: Request login magic link
+      operationId: authLogin
       security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AuthNonceRequest"
+              $ref: "#/components/schemas/AuthLoginRequest"
       responses:
         "200":
-          description: Nonce issued
+          description: Login link sent (if account exists)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthNonceResponse"
+                $ref: "#/components/schemas/AuthLoginResponse"
         "400":
           description: Bad Request
           content:
@@ -83,7 +83,7 @@ paths:
   /auth/verify:
     post:
       tags: [auth]
-      summary: Verify wallet signature and create a session (sets HttpOnly cookie)
+      summary: Verify email token create a session (sets HttpOnly cookie)
       operationId: authVerify
       security: []
       requestBody:
@@ -116,6 +116,75 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorUnauthorized"
+
+  /auth/signup/complete:
+    post:
+      tags: [auth]
+      summary: Complete signup with wallet signature (creates user and main session)
+      operationId: authSignupComplete
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthVerifyWalletRequest"
+      responses:
+        "200":
+          description: Signup completed successfully (main session cookie set)
+          headers:
+            Set-Cookie:
+              description: HttpOnly session cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthVerifyWalletResponse"
+        "400":
+          description: Bad Request (invalid payload, expired/used nonce, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequest"
+        "401":
+          description: Unauthorized (invalid session, signature, or nonce)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorUnauthorized"
+        "409":
+          description: Conflict (wallet or email already in use)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequest"
+
+  /auth/nonce:
+    post:
+      tags: [auth]
+      summary: Request a nonce for wallet sign-in
+      operationId: authNonce
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthNonceRequest"
+      responses:
+        "200":
+          description: Nonce issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthNonceResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequest"
 
   /auth/logout:
     post:
@@ -1146,6 +1215,26 @@ components:
         - message
       additionalProperties: false
 
+    AuthLoginRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 255
+      additionalProperties: false
+
+    AuthLoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+      additionalProperties: false
+
     AuthNonceRequest:
       type: object
       required: [address]
@@ -1172,6 +1261,29 @@ components:
 
     AuthVerifyRequest:
       type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+          description: Token generated during signup/signin
+      additionalProperties: false
+
+    AuthVerifyResponse:
+      type: object
+      required: [email, needsWallet]
+      properties:
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+          nullable: true
+        needsWallet:
+          type: boolean
+          description: Whether the user needs to connect a wallet to complete signup
+
+    AuthVerifyWalletRequest:
+      type: object
       required: [address, signature, message]
       properties:
         address:
@@ -1185,7 +1297,7 @@ components:
           description: The exact message that was signed (must include nonce and domain binding)
       additionalProperties: false
 
-    AuthVerifyResponse:
+    AuthVerifyWalletResponse:
       type: object
       required: [user]
       properties:

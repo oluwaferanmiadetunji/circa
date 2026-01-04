@@ -187,7 +187,7 @@ func TestService_SendMagicLink(t *testing.T) {
 			originalClient := service.Client()
 			service.SetClient(mockClient)
 
-			err := service.SendMagicLink(context.Background(), tt.toEmail, tt.toName, tt.magicLinkURL)
+			err := service.SendMagicLink(context.Background(), tt.toEmail, tt.toName, tt.magicLinkURL, false)
 
 			if tt.expectedError != nil {
 				require.Error(t, err)
@@ -218,7 +218,7 @@ func TestService_SendMagicLink_EmailContent(t *testing.T) {
 	originalClient := service.Client()
 	service.SetClient(mockClient)
 
-	err := service.SendMagicLink(context.Background(), "user@example.com", "John Doe", "https://example.com/verify?token=abc123")
+	err := service.SendMagicLink(context.Background(), "user@example.com", "John Doe", "https://example.com/verify?token=abc123", false)
 	require.NoError(t, err)
 
 	html := capturedParams.Html

@@ -52,8 +52,23 @@ func (r *resendEmailsServiceWrapper) SendWithContext(ctx context.Context, params
 	return r.emails.SendWithContext(ctx, params)
 }
 
-func (s *Service) SendMagicLink(ctx context.Context, toEmail, toName, magicLinkURL string) error {
-	subject := "Verify your email for Circa"
+func (s *Service) SendMagicLink(ctx context.Context, toEmail, toName, magicLinkURL string, isLogin bool) error {
+	var subject, headerText, bodyText, buttonText, footerText string
+
+	if isLogin {
+		subject = "Sign in to Circa"
+		headerText = "Sign in to Circa"
+		bodyText = "Click the button below to sign in to your account:"
+		buttonText = "Sign In"
+		footerText = "If you didn't request this login link, you can safely ignore this email."
+	} else {
+		subject = "Verify your email for Circa"
+		headerText = "Welcome to Circa!"
+		bodyText = "Thank you for signing up! Please verify your email address by clicking the button below:"
+		buttonText = "Verify Email"
+		footerText = "If you didn't create an account, you can safely ignore this email."
+	}
+
 	htmlBody := fmt.Sprintf(`
 		<!DOCTYPE html>
 		<html>
@@ -63,27 +78,41 @@ func (s *Service) SendMagicLink(ctx context.Context, toEmail, toName, magicLinkU
 		</head>
 		<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
 			<div style="background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-				<h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Circa!</h1>
+				<h1 style="color: white; margin: 0; font-size: 28px;">%s</h1>
 			</div>
 			<div style="background: #ffffff; padding: 40px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
 				<p style="font-size: 16px; margin-bottom: 20px;">Hi %s,</p>
-				<p style="font-size: 16px; margin-bottom: 20px;">Thank you for signing up! Please verify your email address by clicking the button below:</p>
+				<p style="font-size: 16px; margin-bottom: 20px;">%s</p>
 				<div style="text-align: center; margin: 30px 0;">
-					<a href="%s" style="background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 16px;">Verify Email</a>
+					<a href="%s" style="background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 16px;">%s</a>
 				</div>
 				<p style="font-size: 14px; color: #666; margin-top: 30px;">Or copy and paste this link into your browser:</p>
 				<p style="font-size: 12px; color: #999; word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 4px;">%s</p>
 				<p style="font-size: 14px; color: #666; margin-top: 30px;">This link will expire in 24 hours.</p>
-				<p style="font-size: 14px; color: #666; margin-top: 20px;">If you didn't create an account, you can safely ignore this email.</p>
+				<p style="font-size: 14px; color: #666; margin-top: 20px;">%s</p>
 			</div>
 			<div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
 				<p style="font-size: 12px; color: #999;">© %d Circa. All rights reserved.</p>
 			</div>
 		</body>
 		</html>
-	`, toName, magicLinkURL, magicLinkURL, time.Now().Year())
+	`, headerText, toName, bodyText, magicLinkURL, buttonText, magicLinkURL, footerText, time.Now().Year())
 
-	textBody := fmt.Sprintf(`
+	var textBody string
+	if isLogin {
+		textBody = fmt.Sprintf(`
+Hi %s,
+
+Click the link below to sign in to your account:
+
+%s
+
+This link will expire in 24 hours.
+
+If you didn't request this login link, you can safely ignore this email.
+		`, toName, magicLinkURL)
+	} else {
+		textBody = fmt.Sprintf(`
 Hi %s,
 
 Thank you for signing up! Please verify your email address by visiting this link:
@@ -93,7 +122,8 @@ Thank you for signing up! Please verify your email address by visiting this link
 This link will expire in 24 hours.
 
 If you didn't create an account, you can safely ignore this email.
-	`, toName, magicLinkURL)
+		`, toName, magicLinkURL)
+	}
 
 	params := &resend.SendEmailRequest{
 		From:    "Circa <onboarding@resend.dev>",

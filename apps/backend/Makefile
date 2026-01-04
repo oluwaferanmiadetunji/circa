@@ -48,4 +48,9 @@ openapi-validate:
 # Generate and validate OpenAPI
 openapi: openapi-validate openapi-generate
 
-.PHONY: install start new_migration stop sqlc run lint test openapi openapi-generate openapi-validate
+# Generate mocks using mockery
+mocks:
+	@echo "Generating mocks..."
+	@go run github.com/vektra/mockery/v2@latest --config .mockery.yaml
+
+.PHONY: install start new_migration stop sqlc run lint test openapi openapi-generate openapi-validate mocks

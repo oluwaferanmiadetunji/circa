@@ -198,6 +198,63 @@ func (_c *MockStore_CreatePendingSignup_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// CreateUser provides a mock function with given fields: ctx, arg
+func (_m *MockStore) CreateUser(ctx context.Context, arg sqlc.CreateUserParams) (sqlc.User, error) {
+	ret := _m.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateUser")
+	}
+
+	var r0 sqlc.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, sqlc.CreateUserParams) (sqlc.User, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, sqlc.CreateUserParams) sqlc.User); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		r0 = ret.Get(0).(sqlc.User)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, sqlc.CreateUserParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockStore_CreateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateUser'
+type MockStore_CreateUser_Call struct {
+	*mock.Call
+}
+
+// CreateUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg sqlc.CreateUserParams
+func (_e *MockStore_Expecter) CreateUser(ctx interface{}, arg interface{}) *MockStore_CreateUser_Call {
+	return &MockStore_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, arg)}
+}
+
+func (_c *MockStore_CreateUser_Call) Run(run func(ctx context.Context, arg sqlc.CreateUserParams)) *MockStore_CreateUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(sqlc.CreateUserParams))
+	})
+	return _c
+}
+
+func (_c *MockStore_CreateUser_Call) Return(_a0 sqlc.User, _a1 error) *MockStore_CreateUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockStore_CreateUser_Call) RunAndReturn(run func(context.Context, sqlc.CreateUserParams) (sqlc.User, error)) *MockStore_CreateUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetJobByID provides a mock function with given fields: ctx, id
 func (_m *MockStore) GetJobByID(ctx context.Context, id uuid.UUID) (sqlc.Job, error) {
 	ret := _m.Called(ctx, id)
@@ -539,6 +596,63 @@ func (_c *MockStore_GetPendingSignupByID_Call) RunAndReturn(run func(context.Con
 	return _c
 }
 
+// GetUserByAddress provides a mock function with given fields: ctx, address
+func (_m *MockStore) GetUserByAddress(ctx context.Context, address string) (sqlc.User, error) {
+	ret := _m.Called(ctx, address)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserByAddress")
+	}
+
+	var r0 sqlc.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (sqlc.User, error)); ok {
+		return rf(ctx, address)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) sqlc.User); ok {
+		r0 = rf(ctx, address)
+	} else {
+		r0 = ret.Get(0).(sqlc.User)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, address)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockStore_GetUserByAddress_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByAddress'
+type MockStore_GetUserByAddress_Call struct {
+	*mock.Call
+}
+
+// GetUserByAddress is a helper method to define mock.On call
+//   - ctx context.Context
+//   - address string
+func (_e *MockStore_Expecter) GetUserByAddress(ctx interface{}, address interface{}) *MockStore_GetUserByAddress_Call {
+	return &MockStore_GetUserByAddress_Call{Call: _e.mock.On("GetUserByAddress", ctx, address)}
+}
+
+func (_c *MockStore_GetUserByAddress_Call) Run(run func(ctx context.Context, address string)) *MockStore_GetUserByAddress_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockStore_GetUserByAddress_Call) Return(_a0 sqlc.User, _a1 error) *MockStore_GetUserByAddress_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockStore_GetUserByAddress_Call) RunAndReturn(run func(context.Context, string) (sqlc.User, error)) *MockStore_GetUserByAddress_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetUserByEmail provides a mock function with given fields: ctx, email
 func (_m *MockStore) GetUserByEmail(ctx context.Context, email pgtype.Text) (sqlc.User, error) {
 	ret := _m.Called(ctx, email)
@@ -649,6 +763,157 @@ func (_c *MockStore_IncrementJobRetry_Call) Return(_a0 sqlc.Job, _a1 error) *Moc
 }
 
 func (_c *MockStore_IncrementJobRetry_Call) RunAndReturn(run func(context.Context, sqlc.IncrementJobRetryParams) (sqlc.Job, error)) *MockStore_IncrementJobRetry_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// InvalidateMagicLinksByEmail provides a mock function with given fields: ctx, email
+func (_m *MockStore) InvalidateMagicLinksByEmail(ctx context.Context, email pgtype.Text) error {
+	ret := _m.Called(ctx, email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for InvalidateMagicLinksByEmail")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, pgtype.Text) error); ok {
+		r0 = rf(ctx, email)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockStore_InvalidateMagicLinksByEmail_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InvalidateMagicLinksByEmail'
+type MockStore_InvalidateMagicLinksByEmail_Call struct {
+	*mock.Call
+}
+
+// InvalidateMagicLinksByEmail is a helper method to define mock.On call
+//   - ctx context.Context
+//   - email pgtype.Text
+func (_e *MockStore_Expecter) InvalidateMagicLinksByEmail(ctx interface{}, email interface{}) *MockStore_InvalidateMagicLinksByEmail_Call {
+	return &MockStore_InvalidateMagicLinksByEmail_Call{Call: _e.mock.On("InvalidateMagicLinksByEmail", ctx, email)}
+}
+
+func (_c *MockStore_InvalidateMagicLinksByEmail_Call) Run(run func(ctx context.Context, email pgtype.Text)) *MockStore_InvalidateMagicLinksByEmail_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(pgtype.Text))
+	})
+	return _c
+}
+
+func (_c *MockStore_InvalidateMagicLinksByEmail_Call) Return(_a0 error) *MockStore_InvalidateMagicLinksByEmail_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockStore_InvalidateMagicLinksByEmail_Call) RunAndReturn(run func(context.Context, pgtype.Text) error) *MockStore_InvalidateMagicLinksByEmail_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// InvalidatePendingSignupsByEmail provides a mock function with given fields: ctx, email
+func (_m *MockStore) InvalidatePendingSignupsByEmail(ctx context.Context, email pgtype.Text) error {
+	ret := _m.Called(ctx, email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for InvalidatePendingSignupsByEmail")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, pgtype.Text) error); ok {
+		r0 = rf(ctx, email)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockStore_InvalidatePendingSignupsByEmail_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InvalidatePendingSignupsByEmail'
+type MockStore_InvalidatePendingSignupsByEmail_Call struct {
+	*mock.Call
+}
+
+// InvalidatePendingSignupsByEmail is a helper method to define mock.On call
+//   - ctx context.Context
+//   - email pgtype.Text
+func (_e *MockStore_Expecter) InvalidatePendingSignupsByEmail(ctx interface{}, email interface{}) *MockStore_InvalidatePendingSignupsByEmail_Call {
+	return &MockStore_InvalidatePendingSignupsByEmail_Call{Call: _e.mock.On("InvalidatePendingSignupsByEmail", ctx, email)}
+}
+
+func (_c *MockStore_InvalidatePendingSignupsByEmail_Call) Run(run func(ctx context.Context, email pgtype.Text)) *MockStore_InvalidatePendingSignupsByEmail_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(pgtype.Text))
+	})
+	return _c
+}
+
+func (_c *MockStore_InvalidatePendingSignupsByEmail_Call) Return(_a0 error) *MockStore_InvalidatePendingSignupsByEmail_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockStore_InvalidatePendingSignupsByEmail_Call) RunAndReturn(run func(context.Context, pgtype.Text) error) *MockStore_InvalidatePendingSignupsByEmail_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MarkMagicLinkAsUsed provides a mock function with given fields: ctx, id
+func (_m *MockStore) MarkMagicLinkAsUsed(ctx context.Context, id uuid.UUID) (sqlc.MagicLink, error) {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkMagicLinkAsUsed")
+	}
+
+	var r0 sqlc.MagicLink
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (sqlc.MagicLink, error)); ok {
+		return rf(ctx, id)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) sqlc.MagicLink); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Get(0).(sqlc.MagicLink)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockStore_MarkMagicLinkAsUsed_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkMagicLinkAsUsed'
+type MockStore_MarkMagicLinkAsUsed_Call struct {
+	*mock.Call
+}
+
+// MarkMagicLinkAsUsed is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+func (_e *MockStore_Expecter) MarkMagicLinkAsUsed(ctx interface{}, id interface{}) *MockStore_MarkMagicLinkAsUsed_Call {
+	return &MockStore_MarkMagicLinkAsUsed_Call{Call: _e.mock.On("MarkMagicLinkAsUsed", ctx, id)}
+}
+
+func (_c *MockStore_MarkMagicLinkAsUsed_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockStore_MarkMagicLinkAsUsed_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *MockStore_MarkMagicLinkAsUsed_Call) Return(_a0 sqlc.MagicLink, _a1 error) *MockStore_MarkMagicLinkAsUsed_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockStore_MarkMagicLinkAsUsed_Call) RunAndReturn(run func(context.Context, uuid.UUID) (sqlc.MagicLink, error)) *MockStore_MarkMagicLinkAsUsed_Call {
 	_c.Call.Return(run)
 	return _c
 }

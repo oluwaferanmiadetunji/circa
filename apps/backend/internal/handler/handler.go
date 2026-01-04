@@ -2,29 +2,26 @@ package handler
 
 import (
 	"circa/api"
+	"circa/internal/config"
+	circaerrors "circa/internal/errors"
 	"circa/internal/service/auth"
+	"errors"
 
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 type Handler struct {
 	authService auth.AuthService
+	config      config.Config
 }
 
 // NewHandler creates a new handler instance
-func NewHandler(authService auth.AuthService) *Handler {
+func NewHandler(authService auth.AuthService, cfg config.Config) *Handler {
 	return &Handler{
 		authService: authService,
+		config:      cfg,
 	}
-}
-
-// AuthVerify handles POST /auth/verify
-func (h *Handler) AuthVerify(ctx echo.Context) error {
-	// TODO: Implement signature verification
-	return ctx.JSON(501, api.ErrorBadRequest{
-		Code:    501,
-		Message: "Not implemented",
-	})
 }
 
 // AuthLogout handles POST /auth/logout
@@ -35,11 +32,46 @@ func (h *Handler) AuthLogout(ctx echo.Context) error {
 
 // GetMe handles GET /me
 func (h *Handler) GetMe(ctx echo.Context) error {
-	// TODO: Implement get me
-	return ctx.JSON(501, api.ErrorBadRequest{
-		Code:    501,
-		Message: "Not implemented",
-	})
+	// Check for circa_session cookie
+	cookie, err := ctx.Cookie("circa_session")
+	if err != nil || cookie == nil || cookie.Value == "" {
+		return ctx.JSON(401, api.ErrorUnauthorized{
+			Code:    401,
+			Message: "Unauthorized - no valid session",
+		})
+	}
+
+	sessionID := cookie.Value
+
+	// Get user from session
+	result, err := h.authService.GetSessionUser(ctx.Request().Context(), sessionID)
+	if err != nil {
+		if errors.Is(err, circaerrors.ErrInvalidSession) {
+			return ctx.JSON(401, api.ErrorUnauthorized{
+				Code:    401,
+				Message: "Unauthorized - invalid or expired session",
+			})
+		}
+		log.Error().Err(err).Msg("Failed to get session user")
+		return ctx.JSON(500, api.ErrorInternalServerError{
+			Code:    500,
+			Message: "Internal server error",
+		})
+	}
+
+	// Convert user to API response
+	user := api.User{
+		Id:          result.User.ID,
+		Address:     api.Address(result.User.Address),
+		CreatedAt:   api.Timestamp(result.User.CreatedAt.Time),
+		DisplayName: result.User.DisplayName,
+	}
+	if result.User.UpdatedAt.Valid {
+		updatedAt := api.Timestamp(result.User.UpdatedAt.Time)
+		user.UpdatedAt = &updatedAt
+	}
+
+	return ctx.JSON(200, user)
 }
 
 // UpdateMe handles PATCH /me

@@ -1,9 +1,9 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
-import Signin from '@/lib/pages/signin'
+import ConnectWallet from '@/lib/pages/connect-wallet'
 import { api_url } from '@/lib/constants'
 
-export const Route = createFileRoute('/auth/signin')({
+export const Route = createFileRoute('/auth/connect_wallet')({
   beforeLoad: async () => {
     // Redirect to /app if user already has a valid session
     const res = await fetch(`${api_url}/me`, {
@@ -18,5 +18,5 @@ export const Route = createFileRoute('/auth/signin')({
       throw redirect({ to: '/app' })
     }
   },
-  component: Signin,
+  component: ConnectWallet,
 })

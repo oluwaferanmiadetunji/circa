@@ -77,6 +77,47 @@ func (q *Queries) GetMagicLinkByTokenHash(ctx context.Context, tokenHash string)
 	return i, err
 }
 
+const invalidateMagicLinksByEmail = `-- name: InvalidateMagicLinksByEmail :exec
+UPDATE magic_links 
+SET deleted_at = NOW() 
+FROM pending_signups 
+WHERE magic_links.pending_signup_id = pending_signups.id 
+  AND pending_signups.email = $1 
+  AND magic_links.deleted_at IS NULL 
+  AND pending_signups.deleted_at IS NULL 
+  AND pending_signups.status = 'pending' 
+  AND pending_signups.email_verified_at IS NULL
+`
+
+func (q *Queries) InvalidateMagicLinksByEmail(ctx context.Context, email pgtype.Text) error {
+	_, err := q.db.Exec(ctx, invalidateMagicLinksByEmail, email)
+	return err
+}
+
+const markMagicLinkAsUsed = `-- name: MarkMagicLinkAsUsed :one
+UPDATE magic_links
+SET deleted_at = NOW()
+WHERE id = $1
+  AND deleted_at IS NULL
+  AND expires_at > NOW()
+RETURNING id, pending_signup_id, token_hash, expires_at, created_at, updated_at, deleted_at
+`
+
+func (q *Queries) MarkMagicLinkAsUsed(ctx context.Context, id uuid.UUID) (MagicLink, error) {
+	row := q.db.QueryRow(ctx, markMagicLinkAsUsed, id)
+	var i MagicLink
+	err := row.Scan(
+		&i.ID,
+		&i.PendingSignupID,
+		&i.TokenHash,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const updateMagicLink = `-- name: UpdateMagicLink :one
 UPDATE magic_links SET expires_at = $1 WHERE id = $2 AND deleted_at IS NULL AND expires_at > NOW() RETURNING id, pending_signup_id, token_hash, expires_at, created_at, updated_at, deleted_at
 `

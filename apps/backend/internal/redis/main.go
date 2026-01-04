@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"log"
 	"os"
 
 	"github.com/go-redis/redis/v8"
@@ -15,7 +14,7 @@ type RedisConfig struct {
 
 var RedisClient *redis.Client
 
-func InitRedis(cfg RedisConfig) {
+func InitRedis(cfg RedisConfig) error {
 	redisAddress := cfg.Address
 	if redisAddress == "" {
 		redisAddress = "localhost:6379"
@@ -33,8 +32,11 @@ func InitRedis(cfg RedisConfig) {
 	})
 
 	if err := RedisClient.Ping(context.Background()).Err(); err != nil {
-		log.Fatalf("failed to connect to Redis: %v", err)
+		RedisClient = nil
+		return err
 	}
+
+	return nil
 }
 
 func GetRedisClient() *redis.Client {

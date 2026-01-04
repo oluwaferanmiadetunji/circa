@@ -1,15 +1,16 @@
-import { TanStackDevtools } from '@tanstack/react-devtools';
-import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
-import { createRootRoute, HeadContent, Outlet } from '@tanstack/react-router';
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
+import { TanStackDevtools } from '@tanstack/react-devtools'
+import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools'
+import { createRootRoute, HeadContent, Outlet } from '@tanstack/react-router'
+import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 
-import { Layout } from '@/lib/layout';
+import { Layout } from '@/lib/layout'
 
-const title = 'Circa';
-const description = 'Circa is a blockchain-based rotating savings application (Ajo / ROSCA) that allows private groups to pool funds periodically and receive payouts in turn, enforced by smart contracts';
-const url = '';
+const title = 'Circa'
+const description =
+  'Circa is a blockchain-based rotating savings application (Ajo / ROSCA) that allows private groups to pool funds periodically and receive payouts in turn, enforced by smart contracts'
+const url = ''
 const ogImgUrl =
-  'https://og.sznm.dev/api/generate?heading=vite-react-tailwind-starter&text=React+vite+template+with+TailwindCSS+and+TypeScript+setup.&template=color';
+  'https://og.sznm.dev/api/generate?heading=vite-react-tailwind-starter&text=React+vite+template+with+TailwindCSS+and+TypeScript+setup.&template=color'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -96,8 +97,23 @@ export const Route = createRootRoute({
     ],
     links: [
       {
+        rel: 'preconnect',
+        href: 'https://fonts.googleapis.com',
+      },
+      {
+        rel: 'preconnect',
+        href: 'https://fonts.gstatic.com',
+        crossOrigin: 'anonymous',
+      },
+      {
+        rel: 'stylesheet',
+        href:
+          'https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap',
+      },
+      {
         rel: 'icon',
-        href: '/favicon.ico',
+        type: 'image/svg+xml',
+        href: '/favicon.svg?v=2',
       },
       {
         rel: 'apple-touch-icon',
@@ -129,4 +145,4 @@ export const Route = createRootRoute({
       />
     </>
   ),
-});
+})

@@ -5,8 +5,8 @@ import (
 	"circa/api"
 	sqlc "circa/internal/db/sqlc/generated"
 	circaerrors "circa/internal/errors"
+	authmocks "circa/internal/handler/mocks"
 	"circa/internal/service/auth"
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -22,31 +22,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type mockAuthService struct {
-	mock.Mock
-}
-
-func (m *mockAuthService) CreatePendingSignup(ctx context.Context, fullName, email string, displayName *string) (*auth.SignupResult, error) {
-	args := m.Called(ctx, fullName, email, displayName)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*auth.SignupResult), args.Error(1)
-}
-
-func (m *mockAuthService) GenerateNonce(address string) (*auth.NonceResult, error) {
-	args := m.Called(address)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*auth.NonceResult), args.Error(1)
-}
-
 func TestHandler_AuthSignup(t *testing.T) {
 	tests := []struct {
 		name           string
 		requestBody    interface{}
-		setupMocks     func(*mockAuthService)
+		setupMocks     func(*authmocks.MockAuthService)
 		expectedStatus int
 		expectedBody   func(*testing.T, *httptest.ResponseRecorder)
 	}{
@@ -57,7 +37,7 @@ func TestHandler_AuthSignup(t *testing.T) {
 				"email":        "john@example.com",
 				"display_name": "johndoe",
 			},
-			setupMocks: func(m *mockAuthService) {
+			setupMocks: func(m *authmocks.MockAuthService) {
 				result := &auth.SignupResult{
 					PendingSignup: createTestPendingSignup(),
 					MagicLink:     createTestMagicLink(),
@@ -80,7 +60,7 @@ func TestHandler_AuthSignup(t *testing.T) {
 				"full_name": "Jane Smith",
 				"email":     "jane@example.com",
 			},
-			setupMocks: func(m *mockAuthService) {
+			setupMocks: func(m *authmocks.MockAuthService) {
 				result := &auth.SignupResult{
 					PendingSignup: createTestPendingSignup(),
 					MagicLink:     createTestMagicLink(),
@@ -101,7 +81,7 @@ func TestHandler_AuthSignup(t *testing.T) {
 			requestBody: func() interface{} {
 				return "invalid json"
 			}(),
-			setupMocks:     func(m *mockAuthService) {},
+			setupMocks:     func(m *authmocks.MockAuthService) {},
 			expectedStatus: 400,
 			expectedBody: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var response api.ErrorBadRequest
@@ -116,7 +96,7 @@ func TestHandler_AuthSignup(t *testing.T) {
 			requestBody: map[string]interface{}{
 				"email": "test@example.com",
 			},
-			setupMocks:     func(m *mockAuthService) {},
+			setupMocks:     func(m *authmocks.MockAuthService) {},
 			expectedStatus: 400,
 			expectedBody: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var response api.ErrorBadRequest
@@ -132,7 +112,7 @@ func TestHandler_AuthSignup(t *testing.T) {
 				"full_name": "",
 				"email":     "test@example.com",
 			},
-			setupMocks:     func(m *mockAuthService) {},
+			setupMocks:     func(m *authmocks.MockAuthService) {},
 			expectedStatus: 400,
 			expectedBody: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var response api.ErrorBadRequest
@@ -147,7 +127,7 @@ func TestHandler_AuthSignup(t *testing.T) {
 			requestBody: map[string]interface{}{
 				"full_name": "Test User",
 			},
-			setupMocks:     func(m *mockAuthService) {},
+			setupMocks:     func(m *authmocks.MockAuthService) {},
 			expectedStatus: 400,
 			expectedBody: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var response api.ErrorBadRequest
@@ -163,7 +143,7 @@ func TestHandler_AuthSignup(t *testing.T) {
 				"full_name": "Test User",
 				"email":     "",
 			},
-			setupMocks:     func(m *mockAuthService) {},
+			setupMocks:     func(m *authmocks.MockAuthService) {},
 			expectedStatus: 400,
 			expectedBody: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var response api.ErrorBadRequest
@@ -179,7 +159,7 @@ func TestHandler_AuthSignup(t *testing.T) {
 				"full_name": "John Doe",
 				"email":     "existing@example.com",
 			},
-			setupMocks: func(m *mockAuthService) {
+			setupMocks: func(m *authmocks.MockAuthService) {
 				m.On("CreatePendingSignup", mock.Anything, "John Doe", "existing@example.com", (*string)(nil)).
 					Return(nil, circaerrors.ErrEmailAlreadyExists)
 			},
@@ -198,7 +178,7 @@ func TestHandler_AuthSignup(t *testing.T) {
 				"full_name": "John Doe",
 				"email":     "test@example.com",
 			},
-			setupMocks: func(m *mockAuthService) {
+			setupMocks: func(m *authmocks.MockAuthService) {
 				m.On("CreatePendingSignup", mock.Anything, "John Doe", "test@example.com", (*string)(nil)).
 					Return(nil, errors.New("database connection error"))
 			},
@@ -218,7 +198,7 @@ func TestHandler_AuthSignup(t *testing.T) {
 				"email":        "john@example.com",
 				"display_name": "",
 			},
-			setupMocks: func(m *mockAuthService) {
+			setupMocks: func(m *authmocks.MockAuthService) {
 				result := &auth.SignupResult{
 					PendingSignup: createTestPendingSignup(),
 					MagicLink:     createTestMagicLink(),
@@ -255,8 +235,7 @@ func TestHandler_AuthSignup(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
-			mockAuth := &mockAuthService{}
-			mockAuth.Test(t)
+			mockAuth := authmocks.NewMockAuthService(t)
 			tt.setupMocks(mockAuth)
 
 			handler := &Handler{

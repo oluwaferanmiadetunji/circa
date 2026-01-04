@@ -4,7 +4,7 @@ import (
 	dbmocks "circa/internal/db/mocks"
 	sqlc "circa/internal/db/sqlc/generated"
 	"circa/internal/queue"
-	"circa/internal/queue/mocks"
+	mocks "circa/internal/queue/mocks"
 	"context"
 	"encoding/json"
 	"errors"

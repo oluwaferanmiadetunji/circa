@@ -79,6 +79,7 @@ func (w *Worker) handleSendMagicLinkEmail(ctx context.Context, job *sqlc.Job) {
 		Email        string `json:"email"`
 		Name         string `json:"name"`
 		MagicLinkURL string `json:"magic_link_url"`
+		IsLogin      bool   `json:"is_login"`
 	}
 
 	if err := json.Unmarshal(job.Payload, &payload); err != nil {
@@ -93,7 +94,7 @@ func (w *Worker) handleSendMagicLinkEmail(ctx context.Context, job *sqlc.Job) {
 		return
 	}
 
-	if err := w.emailService.SendMagicLink(ctx, payload.Email, payload.Name, payload.MagicLinkURL); err != nil {
+	if err := w.emailService.SendMagicLink(ctx, payload.Email, payload.Name, payload.MagicLinkURL, payload.IsLogin); err != nil {
 		log.Error().
 			Err(err).
 			Str("job_id", job.ID.String()).
@@ -126,4 +127,3 @@ func (w *Worker) handleSendMagicLinkEmail(ctx context.Context, job *sqlc.Job) {
 		Str("email", payload.Email).
 		Msg("Magic link email sent successfully")
 }
-

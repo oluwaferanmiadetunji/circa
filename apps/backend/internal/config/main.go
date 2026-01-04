@@ -30,6 +30,7 @@ type Config struct {
 	ResendAPIKey  string
 	EmailFrom     string
 	EmailFromName string
+	IsProduction  bool
 }
 
 func LoadConfig() (Config, error) {
@@ -47,7 +48,7 @@ func LoadConfig() (Config, error) {
 	config.DatabaseURL = mustGetEnv("DB_URL")
 
 	config.Redis = Redis{
-		Address:  mustGetEnv("REDIS_ADDRESS"),
+		Address:  os.Getenv("REDIS_ADDRESS"),
 		Password: os.Getenv("REDIS_PASSWORD"),
 	}
 
@@ -55,6 +56,7 @@ func LoadConfig() (Config, error) {
 	config.ResendAPIKey = mustGetEnv("RESEND_API_KEY")
 	config.EmailFrom = mustGetEnv("EMAIL_FROM")
 	config.EmailFromName = mustGetEnv("EMAIL_FROM_NAME")
+	config.IsProduction = os.Getenv("ENV") == "production"
 
 	if _, err := strconv.Atoi(config.Port); err != nil {
 		return config, fmt.Errorf("invalid port number: %w", err)

@@ -1,6 +1,6 @@
 services:
   redis:
-    image: redis:6.0
+    image: redis:7.2
     container_name: circa_redis
     ports:
       - "6377:6379"

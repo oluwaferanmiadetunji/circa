@@ -9,11 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthVerifyRouteImport } from './routes/auth.verify'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
 import { Route as AuthSigninRouteImport } from './routes/auth.signin'
+import { Route as AuthConnect_walletRouteImport } from './routes/auth.connect_wallet'
 
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -34,15 +41,24 @@ const AuthSigninRoute = AuthSigninRouteImport.update({
   path: '/auth/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthConnect_walletRoute = AuthConnect_walletRouteImport.update({
+  id: '/auth/connect_wallet',
+  path: '/auth/connect_wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRoute
+  '/auth/connect_wallet': typeof AuthConnect_walletRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify': typeof AuthVerifyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app': typeof AppRoute
+  '/auth/connect_wallet': typeof AuthConnect_walletRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify': typeof AuthVerifyRoute
@@ -50,20 +66,43 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRoute
+  '/auth/connect_wallet': typeof AuthConnect_walletRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify': typeof AuthVerifyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth/signin' | '/auth/signup' | '/auth/verify'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/auth/connect_wallet'
+    | '/auth/signin'
+    | '/auth/signup'
+    | '/auth/verify'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/signin' | '/auth/signup' | '/auth/verify'
-  id: '__root__' | '/' | '/auth/signin' | '/auth/signup' | '/auth/verify'
+  to:
+    | '/'
+    | '/app'
+    | '/auth/connect_wallet'
+    | '/auth/signin'
+    | '/auth/signup'
+    | '/auth/verify'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/auth/connect_wallet'
+    | '/auth/signin'
+    | '/auth/signup'
+    | '/auth/verify'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRoute
+  AuthConnect_walletRoute: typeof AuthConnect_walletRoute
   AuthSigninRoute: typeof AuthSigninRoute
   AuthSignupRoute: typeof AuthSignupRoute
   AuthVerifyRoute: typeof AuthVerifyRoute
@@ -71,6 +110,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -99,11 +145,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSigninRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/connect_wallet': {
+      id: '/auth/connect_wallet'
+      path: '/auth/connect_wallet'
+      fullPath: '/auth/connect_wallet'
+      preLoaderRoute: typeof AuthConnect_walletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRoute,
+  AuthConnect_walletRoute: AuthConnect_walletRoute,
   AuthSigninRoute: AuthSigninRoute,
   AuthSignupRoute: AuthSignupRoute,
   AuthVerifyRoute: AuthVerifyRoute,

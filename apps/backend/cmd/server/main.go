@@ -7,6 +7,7 @@ import (
 	"circa/internal/email"
 	"circa/internal/handler"
 	"circa/internal/queue"
+	"circa/internal/redis"
 	"circa/internal/service/auth"
 	"context"
 	"net/http"
@@ -36,6 +37,16 @@ func main() {
 		log.Fatal().Err(err).Msg("Error initializing database")
 	}
 
+	// Initialize Redis (optional - app can run without it)
+	if err := redis.InitRedis(redis.RedisConfig{
+		Address:  cfg.Redis.Address,
+		Password: cfg.Redis.Password,
+	}); err != nil {
+		log.Warn().Err(err).Msg("Failed to connect to Redis, continuing without Redis support")
+	} else {
+		log.Info().Msg("Redis connected successfully")
+	}
+
 	queueService := queue.NewService(store)
 	emailService := email.NewService(cfg.ResendAPIKey)
 	queueWorker := queue.NewWorker(queueService, emailService)
@@ -43,7 +54,7 @@ func main() {
 	authService := auth.NewService(store, queueService, cfg.FrontendURL, 15*time.Minute)
 
 	// Initialize handlers
-	h := handler.NewHandler(authService)
+	h := handler.NewHandler(authService, cfg)
 
 	// Create Echo instance
 	e := echo.New()

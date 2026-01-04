@@ -16,4 +16,9 @@ packages:
       EmailService:
         config:
           dir: "internal/queue/mocks"
+  circa/internal/service/auth:
+    interfaces:
+      AuthService:
+        config:
+          dir: "internal/handler/mocks"
 

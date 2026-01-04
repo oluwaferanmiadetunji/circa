@@ -17,14 +17,24 @@ require (
 )
 
 require (
+	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251001021608-1fe7b43fc4d6 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
+	github.com/bits-and-blooms/bitset v1.20.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/consensys/gnark-crypto v0.18.0 // indirect
+	github.com/crate-crypto/go-eth-kzg v1.4.0 // indirect
+	github.com/crate-crypto/go-ipa v0.0.0-20240724233137-53bbb0ceb27a // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dprotaso/go-yit v0.0.0-20251217220025-0b8845c5554e // indirect
+	github.com/ethereum/c-kzg-4844/v2 v2.1.5 // indirect
+	github.com/ethereum/go-ethereum v1.16.7 // indirect
+	github.com/ethereum/go-verkle v0.2.2 // indirect
 	github.com/getkin/kin-openapi v0.133.0 // indirect
 	github.com/go-openapi/jsonpointer v0.22.4 // indirect
 	github.com/go-openapi/swag/jsonname v0.25.4 // indirect
+	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
@@ -43,6 +53,7 @@ require (
 	github.com/speakeasy-api/jsonpath v0.6.2 // indirect
 	github.com/speakeasy-api/openapi-overlay v0.10.3 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/supranational/blst v0.3.16-0.20250831170142-f48500c1fdbe // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
